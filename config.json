@@ -3,62 +3,40 @@
     "password": "dm123456"
   },
   "app": {
-    "name": "岁月史书",
-    "description": "武侠跑团角色卡管理系统",
-    "list_title": "天机榜"
+    "name": "TRPG Card Hub",
+    "description": "跑团角色卡管理系统",
+    "list_title": "角色卡大厅"
   },
   "theme": {
-    "primary_color": "#8b2121",
-    "bg_color": "#f4eee1",
-    "border_color": "#cbb494"
+    "primary_color": "#2b6cb0",
+    "bg_color": "#f0f4f8",
+    "border_color": "#90cdf4"
   },
   "character": {
     "stats": [
-      {"key": "str", "label": "力量", "short": "力", "min": 6, "default": 6},
-      {"key": "agi", "label": "敏捷", "short": "敏", "min": 6, "default": 6},
-      {"key": "con", "label": "体质", "short": "体", "min": 6, "default": 6},
-      {"key": "spr", "label": "精神", "short": "精", "min": 6, "default": 6},
-      {"key": "wis", "label": "智慧", "short": "智", "min": 6, "default": 6}
+      {"key": "str", "label": "力量 STR", "short": "STR", "min": 1, "default": 10},
+      {"key": "dex", "label": "敏捷 DEX", "short": "DEX", "min": 1, "default": 10},
+      {"key": "con", "label": "体质 CON", "short": "CON", "min": 1, "default": 10},
+      {"key": "int", "label": "智力 INT", "short": "INT", "min": 1, "default": 10},
+      {"key": "wis", "label": "感知 WIS", "short": "WIS", "min": 1, "default": 10},
+      {"key": "cha", "label": "魅力 CHA", "short": "CHA", "min": 1, "default": 10}
     ],
     "fields": {
-      "realm":      {"label": "境界", "placeholder": "例如：金刚境、一流水准"},
-      "appearance": {"label": "外貌", "placeholder": "例如：剑眉星目，一袭白衣"},
-      "background": {"label": "背景", "placeholder": "简述身世来历"}
+      "realm":      {"label": "职业/等级", "placeholder": "例如：战士 Lv.5、私家侦探"},
+      "appearance": {"label": "外貌",      "placeholder": "描述角色的外貌特征"},
+      "background": {"label": "背景故事",  "placeholder": "角色的出身与经历"}
     }
   },
   "currency": {
-    "enabled": true,
+    "enabled": false,
     "units": [
-      {"key": "gold",   "label": "金锭", "rate": 5000},
-      {"key": "silver", "label": "锭银", "rate": 500},
-      {"key": "broken", "label": "碎银", "rate": 100},
-      {"key": "wen",    "label": "文",   "rate": 1}
+      {"key": "gold",   "label": "金币 GP", "rate": 100},
+      {"key": "silver", "label": "银币 SP", "rate": 10},
+      {"key": "copper", "label": "铜币 CP", "rate": 1}
     ]
   },
   "reference": {
     "title": "世界观参考",
-    "sections": [
-      {
-        "title": "功法与境界上限",
-        "items": [
-          "凡阶上品 ➔ 一流武者",
-          "黄阶上品 ➔ 金刚境大圆满",
-          "玄阶上品 ➔ 指玄境大圆满",
-          "地阶上品 ➔ 天象境大圆满",
-          "天阶上品 ➔ 陆地仙人大圆满"
-        ]
-      },
-      {
-        "title": "境界划分 (由高到低)",
-        "items": [
-          "1. 大长生（破虚）",
-          "2. 陆地仙人（天人）",
-          "3. 天象境（宗师）",
-          "4. 指玄境（先天）",
-          "5. 金刚境（后天）",
-          "6. 一流 ➔ 二流 ➔ 三流"
-        ]
-      }
-    ]
+    "sections": []
   }
 }
