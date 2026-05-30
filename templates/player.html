@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>建卡端</title>
+    <style>
+        :root { --primary-color: #8b2121; --bg-color: #f4eee1; --border-color: #cbb494; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background-color: var(--bg-color); color: #333; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { display: flex; gap: 20px; max-width: 1200px; width: 100%; }
+        .main-panel, .side-panel { background: #fff; padding: 20px; border: 2px solid var(--border-color); border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .main-panel { flex: 2; position: relative; }
+        .side-panel { flex: 1; height: fit-content; }
+        h1, h2, h3 { color: var(--primary-color); border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: inline-block; width: 80px; font-weight: bold; vertical-align: top; }
+        input[type="text"], input[type="number"], input[type="password"], textarea { width: calc(100% - 100px); padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; }
+        .attr-group { display: flex; flex-wrap: wrap; gap: 10px; }
+        .attr-group div { display: flex; align-items: center; width: 45%; }
+        .attr-group label { width: 50px; }
+        .attr-group input { width: 80px; }
+        .warning { color: red; font-size: 0.9em; display: none; margin-top: 5px; }
+        button { background-color: var(--primary-color); color: #fff; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; font-size: 14px; }
+        button:hover { filter: brightness(1.2); }
+        .dynamic-card { border: 1px dashed var(--border-color); padding: 10px; margin-bottom: 10px; background: #faf8f5; border-radius: 4px; position: relative; }
+        .remove-btn { position: absolute; top: 5px; right: 5px; background: #e53e3e; padding: 2px 8px; font-size: 12px; }
+        .currency-box { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+        .currency-box input { width: 60px; }
+        #status-bar { background: #e2e8f0; padding: 10px; text-align: center; font-weight: bold; margin-bottom: 15px; border-radius: 4px; color: #2b6cb0; display: none; }
+        #resetBtn { background: #718096; position: absolute; right: 20px; top: 20px; }
+        .nav-home { position: absolute; left: 20px; top: 20px; background: #555; text-decoration: none; color: white; padding: 8px 15px; border-radius: 4px; font-size: 14px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="main-panel">
+        <a href="/" class="nav-home">← 返回主页</a>
+        <button id="resetBtn">建新卡</button>
+        <h1 id="page-title" style="text-align:center; margin-top:40px;">角色卡录入</h1>
+        <div id="status-bar"></div>
+
+        <div class="form-group"><label>名字:</label><input type="text" id="charName" placeholder="输入角色名字"></div>
+        <div class="form-group"><label id="label-realm">境界:</label><input type="text" id="charRealm"></div>
+        <div class="form-group"><label id="label-appearance">外貌:</label><input type="text" id="charApp"></div>
+        <div class="form-group"><label id="label-background">背景:</label><textarea id="charBg" rows="3"></textarea></div>
+
+        <div class="form-group" style="background:#f7fafc; padding:10px; border-radius:4px; border-left:4px solid #3182ce;">
+            <label style="color:#2b6cb0;">卡片密码:</label>
+            <input type="password" id="charPwd" placeholder="可选：留空则公开，设密码则加密保护">
+            <div style="font-size:12px; color:#718096; margin-left:85px; margin-top:5px;">* 设置密码后，其他人查看此卡时需输入密码。</div>
+        </div>
+
+        <h2>✨ 特性录入</h2>
+        <div id="traits-container"></div>
+        <button type="button" onclick="addTrait()" style="background:#555; margin-bottom:15px;">+ 添加特性</button>
+
+        <h2>📊 属性分配 <span style="font-size:14px; color:#555;">(总和: <span id="points-total" style="color:var(--primary-color); font-weight:bold;">0</span>)</span></h2>
+        <div class="attr-group" id="stats-container"></div>
+        <div id="attr-warning" class="warning">警告：有属性低于最小值！</div>
+
+        <h2 id="currency-title" style="display:none;">💰 资产与物品</h2>
+        <div class="currency-box" id="currency-container"></div>
+        <div id="items-container" style="margin-top:10px;"></div>
+        <button type="button" onclick="addItem()" style="background:#555;">+ 添加物品</button>
+
+        <h2>📜 技能录入</h2>
+        <div id="skills-container"></div>
+        <button type="button" onclick="addSkill()" style="background:#555;">+ 添加技能</button>
+
+        <hr style="margin:30px 0; border:1px solid var(--border-color);">
+        <button id="submitBtn" style="width:100%; font-size:18px; font-weight:bold; padding:15px;">创建角色卡</button>
+    </div>
+
+    <div class="side-panel">
+        <div id="reference-content"></div>
+    </div>
+</div>
+
+<script>
+    let CONFIG = null;
+    let myCharId = localStorage.getItem('char_id');
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlId = urlParams.get('id');
+    const urlPwd = urlParams.get('pwd');
+    const statusBar = document.getElementById('status-bar');
+    const submitBtn = document.getElementById('submitBtn');
+
+    async function init() {
+        const res = await fetch('/api/config');
+        CONFIG = await res.json();
+        applyTheme();
+        applyLabels();
+        renderStats();
+        renderCurrency();
+        renderReference();
+        if (urlParams.get('new')) { localStorage.removeItem('char_id'); myCharId = null; }
+        loadCharacter();
+    }
+
+    function applyTheme() {
+        const t = CONFIG.theme;
+        document.documentElement.style.setProperty('--primary-color', t.primary_color);
+        document.documentElement.style.setProperty('--bg-color', t.bg_color);
+        document.documentElement.style.setProperty('--border-color', t.border_color);
+        document.title = CONFIG.app.name + ' - 建卡端';
+        document.getElementById('page-title').textContent = '🗡️ ' + CONFIG.app.name + ' 角色卡录入';
+    }
+
+    function applyLabels() {
+        const f = CONFIG.character.fields;
+        document.getElementById('label-realm').textContent = f.realm.label + ':';
+        document.getElementById('label-appearance').textContent = f.appearance.label + ':';
+        document.getElementById('label-background').textContent = f.background.label + ':';
+        document.getElementById('charRealm').placeholder = f.realm.placeholder;
+        document.getElementById('charApp').placeholder = f.appearance.placeholder;
+        document.getElementById('charBg').placeholder = f.background.placeholder;
+    }
+
+    function renderStats() {
+        const container = document.getElementById('stats-container');
+        container.innerHTML = '';
+        CONFIG.character.stats.forEach(stat => {
+            const div = document.createElement('div');
+            div.innerHTML = `<label>${stat.label}:</label><input type="number" id="attr-${stat.key}" class="attr-input" value="${stat.default}" min="${stat.min}" oninput="calcStats()">`;
+            container.appendChild(div);
+        });
+        calcStats();
+    }
+
+    function renderCurrency() {
+        const cur = CONFIG.currency;
+        if (!cur.enabled) return;
+        document.getElementById('currency-title').style.display = '';
+        const container = document.getElementById('currency-container');
+        container.innerHTML = cur.units.map(u =>
+            `<input type="number" id="coin-${u.key}" value="0"> ${u.label}`
+        ).join(' ') + ` <button type="button" onclick="calcCurrency()">整理</button>`;
+    }
+
+    function renderReference() {
+        const ref = CONFIG.reference;
+        if (!ref || !ref.sections) return;
+        let html = `<h2>📚 ${ref.title}</h2>`;
+        ref.sections.forEach(s => {
+            html += `<h3>${s.title}</h3>` + s.items.map(i => `<p>${i}</p>`).join('');
+        });
+        document.getElementById('reference-content').innerHTML = html;
+    }
+
+    function calcStats() {
+        let sum = 0, valid = true;
+        document.querySelectorAll('.attr-input').forEach(input => {
+            const val = parseInt(input.value) || 0;
+            if (val < parseInt(input.min || 0)) valid = false;
+            sum += val;
+        });
+        document.getElementById('points-total').innerText = sum;
+        document.getElementById('attr-warning').style.display = valid ? 'none' : 'block';
+    }
+
+    function calcCurrency() {
+        const units = CONFIG.currency.units;
+        let total = units.reduce((acc, u) => acc + (parseInt(document.getElementById('coin-' + u.key).value) || 0) * u.rate, 0);
+        units.forEach(u => {
+            const val = Math.floor(total / u.rate);
+            document.getElementById('coin-' + u.key).value = val;
+            total -= val * u.rate;
+        });
+    }
+
+    function removeParent(btn) { btn.parentElement.remove(); }
+
+    function addTrait(name='', grade='', effect='') {
+        const div = document.createElement('div');
+        div.className = 'dynamic-card trait-card';
+        div.innerHTML = `<button type="button" class="remove-btn" onclick="removeParent(this)">X</button>
+            <div class="form-group" style="margin-bottom:5px;"><label>名字:</label><input type="text" class="tr-name" value="${name}"></div>
+            <div class="form-group" style="margin-bottom:5px;"><label>品级:</label><input type="text" class="tr-grade" value="${grade}"></div>
+            <div class="form-group" style="margin-bottom:0;"><label>效果:</label><textarea class="tr-effect" rows="2">${effect}</textarea></div>`;
+        document.getElementById('traits-container').appendChild(div);
+    }
+
+    function addSkill(name='', realm='', desc='', effect='') {
+        const div = document.createElement('div');
+        div.className = 'dynamic-card skill-card';
+        div.innerHTML = `<button type="button" class="remove-btn" onclick="removeParent(this)">X</button>
+            <div class="form-group" style="margin-bottom:5px;"><label>名字:</label><input type="text" class="sk-name" value="${name}"></div>
+            <div class="form-group" style="margin-bottom:5px;"><label>等级:</label><input type="text" class="sk-realm" value="${realm}"></div>
+            <div class="form-group" style="margin-bottom:5px;"><label>介绍:</label><textarea class="sk-desc" rows="2">${desc}</textarea></div>
+            <div class="form-group" style="margin-bottom:0;"><label>效果:</label><textarea class="sk-effect" rows="2">${effect}</textarea></div>`;
+        document.getElementById('skills-container').appendChild(div);
+    }
+
+    function addItem(name='', desc='') {
+        const div = document.createElement('div');
+        div.className = 'dynamic-card item-card';
+        div.innerHTML = `<button type="button" class="remove-btn" onclick="removeParent(this)">X</button>
+            <div class="form-group" style="margin-bottom:5px;"><label>物品名:</label><input type="text" class="it-name" value="${name}"></div>
+            <div class="form-group" style="margin-bottom:0;"><label>描述/数量:</label><input type="text" class="it-desc" value="${desc}"></div>`;
+        document.getElementById('items-container').appendChild(div);
+    }
+
+    function fillForm(data) {
+        myCharId = data.id;
+        localStorage.setItem('char_id', myCharId);
+        ['traits-container', 'skills-container', 'items-container'].forEach(id => {
+            document.getElementById(id).innerHTML = '';
+        });
+        document.getElementById('charName').value = data.name || '';
+        document.getElementById('charRealm').value = data.realm || '';
+        document.getElementById('charApp').value = data.appearance || '';
+        document.getElementById('charBg').value = data.background || '';
+        document.getElementById('charPwd').value = data.password || '';
+        CONFIG.character.stats.forEach(s => {
+            const el = document.getElementById('attr-' + s.key);
+            if (el) el.value = data.stats?.[s.key] ?? s.default;
+        });
+        if (CONFIG.currency.enabled) {
+            CONFIG.currency.units.forEach(u => {
+                const el = document.getElementById('coin-' + u.key);
+                if (el) el.value = data.assets?.[u.key] ?? 0;
+            });
+        }
+        if (data.traits) data.traits.forEach(t => addTrait(t.name, t.grade, t.effect));
+        if (data.skills) data.skills.forEach(s => addSkill(s.name, s.realm, s.desc, s.effect));
+        if (data.items) data.items.forEach(i => addItem(i.name, i.desc));
+        calcStats();
+        submitBtn.innerText = '💾 保存并更新角色卡';
+        statusBar.style.display = 'block';
+        statusBar.innerText = `已加载【${data.name}】`;
+        statusBar.style.background = '#c6f6d5';
+        statusBar.style.color = '#276749';
+    }
+
+    function initEmpty() {
+        ['traits-container', 'skills-container', 'items-container'].forEach(id => {
+            document.getElementById(id).innerHTML = '';
+        });
+        ['charName', 'charRealm', 'charApp', 'charBg', 'charPwd'].forEach(id => {
+            document.getElementById(id).value = '';
+        });
+        CONFIG.character.stats.forEach(s => {
+            const el = document.getElementById('attr-' + s.key);
+            if (el) el.value = s.default;
+        });
+        if (CONFIG.currency.enabled) {
+            CONFIG.currency.units.forEach(u => {
+                const el = document.getElementById('coin-' + u.key);
+                if (el) el.value = 0;
+            });
+        }
+        addTrait(); addSkill(); addItem(); calcStats();
+    }
+
+    async function loadCharacter() {
+        const targetId = urlId || myCharId;
+        if (!targetId) { initEmpty(); return; }
+
+        statusBar.style.display = 'block';
+        statusBar.innerText = '正在加载角色数据...';
+
+        try {
+            const params = urlPwd ? `?pwd=${urlPwd}` : '';
+            let response = await fetch(`/api/get/${targetId}${params}`);
+
+            if (response.status === 403) {
+                const inputPwd = prompt('此角色卡设有密码保护，请输入密码：');
+                if (!inputPwd) { initEmpty(); return; }
+                response = await fetch(`/api/get/${targetId}?pwd=${encodeURIComponent(inputPwd)}`);
+                if (!response.ok) { alert('密码错误！'); window.location.href = '/list'; return; }
+            }
+
+            const result = await response.json();
+            if (result.status === 'success') {
+                fillForm(result.data);
+            } else {
+                localStorage.removeItem('char_id');
+                myCharId = null;
+                initEmpty();
+                statusBar.innerText = '未找到角色数据，请创建新卡。';
+                statusBar.style.background = '#fed7d7';
+                statusBar.style.color = '#c53030';
+            }
+        } catch (e) {
+            console.error(e);
+            initEmpty();
+        }
+    }
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+        if (confirm('确定要建新卡吗？(旧卡将保留在服务器)')) {
+            localStorage.removeItem('char_id');
+            window.location.href = '/create?new=1';
+        }
+    });
+
+    submitBtn.addEventListener('click', async () => {
+        if (CONFIG.currency.enabled) calcCurrency();
+
+        const gatherData = (selector, fields) => {
+            const arr = [];
+            document.querySelectorAll(selector).forEach(card => {
+                const obj = {};
+                fields.forEach(f => obj[f.key] = card.querySelector(f.cls)?.value || '');
+                if (obj[fields[0].key]) arr.push(obj);
+            });
+            return arr;
+        };
+
+        const stats = {};
+        CONFIG.character.stats.forEach(s => {
+            stats[s.key] = document.getElementById('attr-' + s.key)?.value || s.default;
+        });
+
+        const assets = {};
+        if (CONFIG.currency.enabled) {
+            CONFIG.currency.units.forEach(u => {
+                assets[u.key] = document.getElementById('coin-' + u.key)?.value || 0;
+            });
+        }
+
+        const characterData = {
+            name: document.getElementById('charName').value || '无名氏',
+            realm: document.getElementById('charRealm').value || '',
+            appearance: document.getElementById('charApp').value || '',
+            background: document.getElementById('charBg').value || '',
+            password: document.getElementById('charPwd').value || '',
+            stats,
+            assets,
+            traits: gatherData('.trait-card', [{key:'name',cls:'.tr-name'},{key:'grade',cls:'.tr-grade'},{key:'effect',cls:'.tr-effect'}]),
+            skills: gatherData('.skill-card', [{key:'name',cls:'.sk-name'},{key:'realm',cls:'.sk-realm'},{key:'desc',cls:'.sk-desc'},{key:'effect',cls:'.sk-effect'}]),
+            items:  gatherData('.item-card',  [{key:'name',cls:'.it-name'},{key:'desc',cls:'.it-desc'}])
+        };
+
+        submitBtn.innerText = '保存中...';
+        try {
+            const res = await fetch('/api/save', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id: myCharId, data: characterData})
+            });
+            const result = await res.json();
+            if (result.status === 'success') {
+                myCharId = result.id;
+                localStorage.setItem('char_id', myCharId);
+                alert(`【${characterData.name}】已保存！`);
+                submitBtn.innerText = '💾 保存并更新角色卡';
+                statusBar.style.display = 'block';
+                statusBar.innerText = '数据已同步';
+                statusBar.style.background = '#c6f6d5';
+                statusBar.style.color = '#276749';
+            }
+        } catch (e) {
+            console.error(e);
+            alert('保存失败！');
+            submitBtn.innerText = myCharId ? '💾 保存并更新角色卡' : '创建角色卡';
+        }
+    });
+
+    init();
+</script>
+</body>
+</html>
