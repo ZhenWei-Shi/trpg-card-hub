@@ -5,70 +5,86 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>建卡端</title>
     <style>
-        :root { --primary-color: #8b2121; --bg-color: #f4eee1; --border-color: #cbb494; }
-        body { font-family: 'Microsoft YaHei', sans-serif; background-color: var(--bg-color); color: #333; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        :root { --primary-color: #2d3748; --bg-color: #f5f0e8; --border-color: #a09080; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: var(--bg-color); color: #333; margin: 0; padding: 20px; display: flex; justify-content: center; }
         .container { display: flex; gap: 20px; max-width: 1200px; width: 100%; }
-        .main-panel, .side-panel { background: #fff; padding: 20px; border: 2px solid var(--border-color); border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .main-panel, .side-panel { background: #fff; padding: 20px; border: 2px solid var(--border-color); border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.08); }
         .main-panel { flex: 2; position: relative; }
         .side-panel { flex: 1; height: fit-content; }
         h1, h2, h3 { color: var(--primary-color); border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
-        .form-group { margin-bottom: 15px; }
+        .form-group { margin-bottom: 14px; }
         label { display: inline-block; width: 80px; font-weight: bold; vertical-align: top; }
-        input[type="text"], input[type="number"], input[type="password"], textarea { width: calc(100% - 100px); padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; }
+        input[type="text"], input[type="number"], input[type="password"], textarea { width: calc(100% - 90px); padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; font-size: 14px; }
         .attr-group { display: flex; flex-wrap: wrap; gap: 10px; }
         .attr-group div { display: flex; align-items: center; width: 45%; }
-        .attr-group label { width: 50px; }
+        .attr-group label { width: 90px; }
         .attr-group input { width: 80px; }
-        .warning { color: red; font-size: 0.9em; display: none; margin-top: 5px; }
-        button { background-color: var(--primary-color); color: #fff; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; font-size: 14px; }
+        .warning { color: red; font-size: 13px; display: none; margin-top: 5px; }
+        button { background: var(--primary-color); color: #fff; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; font-size: 14px; }
         button:hover { filter: brightness(1.2); }
         .dynamic-card { border: 1px dashed var(--border-color); padding: 10px; margin-bottom: 10px; background: #faf8f5; border-radius: 4px; position: relative; }
-        .remove-btn { position: absolute; top: 5px; right: 5px; background: #e53e3e; padding: 2px 8px; font-size: 12px; }
+        .remove-btn { position: absolute; top: 6px; right: 6px; background: #e53e3e; padding: 2px 8px; font-size: 12px; }
         .currency-box { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
         .currency-box input { width: 60px; }
-        #status-bar { background: #e2e8f0; padding: 10px; text-align: center; font-weight: bold; margin-bottom: 15px; border-radius: 4px; color: #2b6cb0; display: none; }
+        #status-bar { padding: 10px; text-align: center; font-weight: bold; margin-bottom: 14px; border-radius: 4px; color: #2b6cb0; display: none; background: #e2e8f0; }
         #resetBtn { background: #718096; position: absolute; right: 20px; top: 20px; }
-        .nav-home { position: absolute; left: 20px; top: 20px; background: #555; text-decoration: none; color: white; padding: 8px 15px; border-radius: 4px; font-size: 14px; }
+        .nav-home { position: absolute; left: 20px; top: 20px; background: #555; text-decoration: none; color: white; padding: 8px 14px; border-radius: 4px; font-size: 13px; }
+        .room-indicator { display: inline-block; background: #ebf8ff; color: #2b6cb0; padding: 3px 10px; border-radius: 12px; font-size: 12px; margin-left: 10px; vertical-align: middle; }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .container { flex-direction: column; }
+            .side-panel { display: none; }
+            input[type="text"], input[type="number"], input[type="password"], textarea { width: calc(100% - 90px); }
+            .attr-group div { width: 100%; }
+            #resetBtn { position: static; margin-bottom: 10px; }
+            .nav-home { position: static; display: inline-block; margin-bottom: 10px; }
+            h1 { margin-top: 10px !important; }
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="main-panel">
-        <a href="/" class="nav-home">← 返回主页</a>
+        <a href="/" class="nav-home">← 主页</a>
         <button id="resetBtn">建新卡</button>
-        <h1 id="page-title" style="text-align:center; margin-top:40px;">角色卡录入</h1>
+        <h1 id="page-title" style="text-align:center; margin-top:50px;">角色卡录入</h1>
         <div id="status-bar"></div>
 
         <div class="form-group"><label>名字:</label><input type="text" id="charName" placeholder="输入角色名字"></div>
-        <div class="form-group"><label id="label-realm">境界:</label><input type="text" id="charRealm"></div>
+        <div class="form-group"><label id="label-realm">职业:</label><input type="text" id="charRealm"></div>
         <div class="form-group"><label id="label-appearance">外貌:</label><input type="text" id="charApp"></div>
         <div class="form-group"><label id="label-background">背景:</label><textarea id="charBg" rows="3"></textarea></div>
 
         <div class="form-group" style="background:#f7fafc; padding:10px; border-radius:4px; border-left:4px solid #3182ce;">
             <label style="color:#2b6cb0;">卡片密码:</label>
             <input type="password" id="charPwd" placeholder="可选：留空则公开，设密码则加密保护">
-            <div style="font-size:12px; color:#718096; margin-left:85px; margin-top:5px;">* 设置密码后，其他人查看此卡时需输入密码。</div>
+            <div style="font-size:12px; color:#718096; margin-left:85px; margin-top:4px;">* 设置密码后，其他人查看此卡时需输入密码。</div>
         </div>
 
         <h2>✨ 特性录入</h2>
         <div id="traits-container"></div>
-        <button type="button" onclick="addTrait()" style="background:#555; margin-bottom:15px;">+ 添加特性</button>
+        <button type="button" onclick="addTrait()" style="background:#718096; margin-bottom:14px;">+ 添加特性</button>
 
-        <h2>📊 属性分配 <span style="font-size:14px; color:#555;">(总和: <span id="points-total" style="color:var(--primary-color); font-weight:bold;">0</span>)</span></h2>
+        <h2>📊 属性分配 <span style="font-size:13px; color:#718096;">总和: <span id="points-total" style="color:var(--primary-color); font-weight:bold;">0</span></span></h2>
         <div class="attr-group" id="stats-container"></div>
         <div id="attr-warning" class="warning">警告：有属性低于最小值！</div>
 
-        <h2 id="currency-title" style="display:none;">💰 资产与物品</h2>
+        <h2 id="currency-title" style="display:none;">💰 资产</h2>
         <div class="currency-box" id="currency-container"></div>
-        <div id="items-container" style="margin-top:10px;"></div>
-        <button type="button" onclick="addItem()" style="background:#555;">+ 添加物品</button>
+
+        <h2>🎒 物品</h2>
+        <div id="items-container"></div>
+        <button type="button" onclick="addItem()" style="background:#718096;">+ 添加物品</button>
 
         <h2>📜 技能录入</h2>
         <div id="skills-container"></div>
-        <button type="button" onclick="addSkill()" style="background:#555;">+ 添加技能</button>
+        <button type="button" onclick="addSkill()" style="background:#718096;">+ 添加技能</button>
 
-        <hr style="margin:30px 0; border:1px solid var(--border-color);">
-        <button id="submitBtn" style="width:100%; font-size:18px; font-weight:bold; padding:15px;">创建角色卡</button>
+        <hr style="margin:28px 0; border:1px solid var(--border-color);">
+        <button id="submitBtn" style="width:100%; font-size:17px; font-weight:bold; padding:14px;">创建角色卡</button>
     </div>
 
     <div class="side-panel">
@@ -78,10 +94,11 @@
 
 <script>
     let CONFIG = null;
-    let myCharId = localStorage.getItem('char_id');
     const urlParams = new URLSearchParams(window.location.search);
     const urlId = urlParams.get('id');
     const urlPwd = urlParams.get('pwd');
+    const roomId = urlParams.get('room') || 'global';
+    let myCharId = localStorage.getItem('char_id');
     const statusBar = document.getElementById('status-bar');
     const submitBtn = document.getElementById('submitBtn');
 
@@ -102,8 +119,9 @@
         document.documentElement.style.setProperty('--primary-color', t.primary_color);
         document.documentElement.style.setProperty('--bg-color', t.bg_color);
         document.documentElement.style.setProperty('--border-color', t.border_color);
-        document.title = CONFIG.app.name + ' - 建卡端';
-        document.getElementById('page-title').textContent = '🗡️ ' + CONFIG.app.name + ' 角色卡录入';
+        document.title = CONFIG.app.name + ' - 建卡';
+        const roomLabel = roomId !== 'global' ? `<span class="room-indicator">📋 ${roomId}</span>` : '';
+        document.getElementById('page-title').innerHTML = `🗡️ ${CONFIG.app.name} 角色卡录入${roomLabel}`;
     }
 
     function applyLabels() {
@@ -139,10 +157,10 @@
 
     function renderReference() {
         const ref = CONFIG.reference;
-        if (!ref || !ref.sections) return;
+        if (!ref || !ref.sections || ref.sections.length === 0) return;
         let html = `<h2>📚 ${ref.title}</h2>`;
         ref.sections.forEach(s => {
-            html += `<h3>${s.title}</h3>` + s.items.map(i => `<p>${i}</p>`).join('');
+            html += `<h3>${s.title}</h3>` + s.items.map(i => `<p style="margin:4px 0; font-size:13px;">${i}</p>`).join('');
         });
         document.getElementById('reference-content').innerHTML = html;
     }
@@ -203,9 +221,7 @@
     function fillForm(data) {
         myCharId = data.id;
         localStorage.setItem('char_id', myCharId);
-        ['traits-container', 'skills-container', 'items-container'].forEach(id => {
-            document.getElementById(id).innerHTML = '';
-        });
+        ['traits-container','skills-container','items-container'].forEach(id => document.getElementById(id).innerHTML = '');
         document.getElementById('charName').value = data.name || '';
         document.getElementById('charRealm').value = data.realm || '';
         document.getElementById('charApp').value = data.appearance || '';
@@ -228,17 +244,12 @@
         submitBtn.innerText = '💾 保存并更新角色卡';
         statusBar.style.display = 'block';
         statusBar.innerText = `已加载【${data.name}】`;
-        statusBar.style.background = '#c6f6d5';
-        statusBar.style.color = '#276749';
+        statusBar.style.background = '#c6f6d5'; statusBar.style.color = '#276749';
     }
 
     function initEmpty() {
-        ['traits-container', 'skills-container', 'items-container'].forEach(id => {
-            document.getElementById(id).innerHTML = '';
-        });
-        ['charName', 'charRealm', 'charApp', 'charBg', 'charPwd'].forEach(id => {
-            document.getElementById(id).value = '';
-        });
+        ['traits-container','skills-container','items-container'].forEach(id => document.getElementById(id).innerHTML = '');
+        ['charName','charRealm','charApp','charBg','charPwd'].forEach(id => document.getElementById(id).value = '');
         CONFIG.character.stats.forEach(s => {
             const el = document.getElementById('attr-' + s.key);
             if (el) el.value = s.default;
@@ -255,48 +266,37 @@
     async function loadCharacter() {
         const targetId = urlId || myCharId;
         if (!targetId) { initEmpty(); return; }
-
         statusBar.style.display = 'block';
         statusBar.innerText = '正在加载角色数据...';
-
         try {
             const params = urlPwd ? `?pwd=${urlPwd}` : '';
             let response = await fetch(`/api/get/${targetId}${params}`);
-
             if (response.status === 403) {
                 const inputPwd = prompt('此角色卡设有密码保护，请输入密码：');
                 if (!inputPwd) { initEmpty(); return; }
                 response = await fetch(`/api/get/${targetId}?pwd=${encodeURIComponent(inputPwd)}`);
                 if (!response.ok) { alert('密码错误！'); window.location.href = '/list'; return; }
             }
-
             const result = await response.json();
             if (result.status === 'success') {
                 fillForm(result.data);
             } else {
-                localStorage.removeItem('char_id');
-                myCharId = null;
-                initEmpty();
+                localStorage.removeItem('char_id'); myCharId = null; initEmpty();
                 statusBar.innerText = '未找到角色数据，请创建新卡。';
-                statusBar.style.background = '#fed7d7';
-                statusBar.style.color = '#c53030';
+                statusBar.style.background = '#fed7d7'; statusBar.style.color = '#c53030';
             }
-        } catch (e) {
-            console.error(e);
-            initEmpty();
-        }
+        } catch(e) { initEmpty(); }
     }
 
     document.getElementById('resetBtn').addEventListener('click', () => {
         if (confirm('确定要建新卡吗？(旧卡将保留在服务器)')) {
             localStorage.removeItem('char_id');
-            window.location.href = '/create?new=1';
+            window.location.href = roomId !== 'global' ? `/create?room=${roomId}&new=1` : '/create?new=1';
         }
     });
 
     submitBtn.addEventListener('click', async () => {
         if (CONFIG.currency.enabled) calcCurrency();
-
         const gatherData = (selector, fields) => {
             const arr = [];
             document.querySelectorAll(selector).forEach(card => {
@@ -306,18 +306,10 @@
             });
             return arr;
         };
-
         const stats = {};
-        CONFIG.character.stats.forEach(s => {
-            stats[s.key] = document.getElementById('attr-' + s.key)?.value || s.default;
-        });
-
+        CONFIG.character.stats.forEach(s => { stats[s.key] = document.getElementById('attr-' + s.key)?.value || s.default; });
         const assets = {};
-        if (CONFIG.currency.enabled) {
-            CONFIG.currency.units.forEach(u => {
-                assets[u.key] = document.getElementById('coin-' + u.key)?.value || 0;
-            });
-        }
+        if (CONFIG.currency.enabled) CONFIG.currency.units.forEach(u => { assets[u.key] = document.getElementById('coin-' + u.key)?.value || 0; });
 
         const characterData = {
             name: document.getElementById('charName').value || '无名氏',
@@ -325,8 +317,7 @@
             appearance: document.getElementById('charApp').value || '',
             background: document.getElementById('charBg').value || '',
             password: document.getElementById('charPwd').value || '',
-            stats,
-            assets,
+            stats, assets,
             traits: gatherData('.trait-card', [{key:'name',cls:'.tr-name'},{key:'grade',cls:'.tr-grade'},{key:'effect',cls:'.tr-effect'}]),
             skills: gatherData('.skill-card', [{key:'name',cls:'.sk-name'},{key:'realm',cls:'.sk-realm'},{key:'desc',cls:'.sk-desc'},{key:'effect',cls:'.sk-effect'}]),
             items:  gatherData('.item-card',  [{key:'name',cls:'.it-name'},{key:'desc',cls:'.it-desc'}])
@@ -337,7 +328,7 @@
             const res = await fetch('/api/save', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({id: myCharId, data: characterData})
+                body: JSON.stringify({id: myCharId, room_id: roomId, data: characterData})
             });
             const result = await res.json();
             if (result.status === 'success') {
@@ -347,11 +338,9 @@
                 submitBtn.innerText = '💾 保存并更新角色卡';
                 statusBar.style.display = 'block';
                 statusBar.innerText = '数据已同步';
-                statusBar.style.background = '#c6f6d5';
-                statusBar.style.color = '#276749';
+                statusBar.style.background = '#c6f6d5'; statusBar.style.color = '#276749';
             }
-        } catch (e) {
-            console.error(e);
+        } catch(e) {
             alert('保存失败！');
             submitBtn.innerText = myCharId ? '💾 保存并更新角色卡' : '创建角色卡';
         }

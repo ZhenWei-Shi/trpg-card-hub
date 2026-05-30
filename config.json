@@ -3,40 +3,59 @@
     "password": "dm123456"
   },
   "app": {
-    "name": "TRPG Card Hub",
-    "description": "跑团角色卡管理系统",
-    "list_title": "角色卡大厅"
+    "name": "克苏鲁的呼唤",
+    "description": "CoC 7th Edition 调查员档案系统",
+    "list_title": "调查员名录"
   },
   "theme": {
-    "primary_color": "#2b6cb0",
-    "bg_color": "#f0f4f8",
-    "border_color": "#90cdf4"
+    "primary_color": "#2d3748",
+    "bg_color": "#f5f0e8",
+    "border_color": "#a09080"
   },
   "character": {
     "stats": [
-      {"key": "str", "label": "力量 STR", "short": "STR", "min": 1, "default": 10},
-      {"key": "dex", "label": "敏捷 DEX", "short": "DEX", "min": 1, "default": 10},
-      {"key": "con", "label": "体质 CON", "short": "CON", "min": 1, "default": 10},
-      {"key": "int", "label": "智力 INT", "short": "INT", "min": 1, "default": 10},
-      {"key": "wis", "label": "感知 WIS", "short": "WIS", "min": 1, "default": 10},
-      {"key": "cha", "label": "魅力 CHA", "short": "CHA", "min": 1, "default": 10}
+      {"key": "str", "label": "力量 STR", "short": "STR", "min": 1, "default": 50},
+      {"key": "con", "label": "体质 CON", "short": "CON", "min": 1, "default": 50},
+      {"key": "siz", "label": "体型 SIZ", "short": "SIZ", "min": 1, "default": 50},
+      {"key": "dex", "label": "敏捷 DEX", "short": "DEX", "min": 1, "default": 50},
+      {"key": "app", "label": "外貌 APP", "short": "APP", "min": 1, "default": 50},
+      {"key": "int", "label": "智力 INT", "short": "INT", "min": 1, "default": 50},
+      {"key": "pow", "label": "意志 POW", "short": "POW", "min": 1, "default": 50},
+      {"key": "edu", "label": "教育 EDU", "short": "EDU", "min": 1, "default": 50},
+      {"key": "luk", "label": "幸运 LUK", "short": "LUK", "min": 1, "default": 50}
     ],
     "fields": {
-      "realm":      {"label": "职业/等级", "placeholder": "例如：战士 Lv.5、私家侦探"},
-      "appearance": {"label": "外貌",      "placeholder": "描述角色的外貌特征"},
-      "background": {"label": "背景故事",  "placeholder": "角色的出身与经历"}
+      "realm":      {"label": "职业",     "placeholder": "例如：私家侦探、医生、记者"},
+      "appearance": {"label": "外貌描述", "placeholder": "年龄、外貌特征"},
+      "background": {"label": "背景故事", "placeholder": "调查员的背景经历"}
     }
   },
   "currency": {
     "enabled": false,
-    "units": [
-      {"key": "gold",   "label": "金币 GP", "rate": 100},
-      {"key": "silver", "label": "银币 SP", "rate": 10},
-      {"key": "copper", "label": "铜币 CP", "rate": 1}
-    ]
+    "units": []
   },
   "reference": {
-    "title": "世界观参考",
-    "sections": []
+    "title": "规则速查",
+    "sections": [
+      {
+        "title": "成功等级",
+        "items": [
+          "🟢 极难成功：技能值 ÷ 5",
+          "🟡 困难成功：技能值 ÷ 2",
+          "⚪ 普通成功：≤ 技能值",
+          "🔴 失败：> 技能值",
+          "💀 大失败：96-100（技能<50时为100）"
+        ]
+      },
+      {
+        "title": "衍生属性公式",
+        "items": [
+          "HP = (CON + SIZ) ÷ 10",
+          "MP = POW ÷ 5",
+          "SAN 初始值 = POW",
+          "移动力 = 8（标准人类）"
+        ]
+      }
+    ]
   }
 }

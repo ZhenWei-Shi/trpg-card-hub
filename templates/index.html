@@ -5,35 +5,66 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>主页</title>
     <style>
-        :root { --primary-color: #8b2121; --bg-color: #f4eee1; --border-color: #cbb494; }
-        body { font-family: 'Microsoft YaHei', sans-serif; background-color: var(--bg-color); color: #333; margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .hero { text-align: center; padding: 40px 20px; }
-        h1 { color: var(--primary-color); font-size: 3em; margin-bottom: 10px; }
-        .subtitle { color: #666; font-size: 1.2em; margin-bottom: 40px; }
-        .btn-group { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
-        .btn { padding: 15px 30px; border-radius: 8px; text-decoration: none; font-size: 1.1em; font-weight: bold; transition: 0.2s; }
+        :root { --primary-color: #2d3748; --bg-color: #f5f0e8; --border-color: #a09080; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: var(--bg-color); color: #333; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+
+        .hero { text-align: center; margin-bottom: 40px; }
+        h1 { color: var(--primary-color); font-size: 2.8em; margin-bottom: 8px; }
+        .subtitle { color: #666; font-size: 1.1em; }
+
+        .main-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 40px; }
+        .btn { padding: 13px 28px; border-radius: 8px; text-decoration: none; font-size: 1em; font-weight: bold; transition: 0.2s; border: none; cursor: pointer; }
         .btn-primary { background: var(--primary-color); color: white; }
-        .btn-secondary { background: #555; color: white; }
+        .btn-secondary { background: #718096; color: white; }
         .btn:hover { filter: brightness(1.15); transform: translateY(-2px); }
-        .footer { margin-top: 60px; color: #aaa; font-size: 0.85em; }
-        .footer a { color: #aaa; }
-        .admin-link { position: fixed; bottom: 20px; right: 24px; font-size: 12px; color: #bbb; text-decoration: none; opacity: 0.6; transition: opacity 0.2s; }
+
+        /* 房间列表 */
+        .rooms-section { width: 100%; max-width: 720px; }
+        .rooms-section h2 { color: var(--primary-color); font-size: 1em; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; border-bottom: 2px solid var(--border-color); padding-bottom: 6px; }
+        .rooms-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+        .room-card { background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; cursor: pointer; transition: 0.2s; text-decoration: none; color: inherit; display: block; }
+        .room-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); border-color: var(--primary-color); transform: translateY(-2px); }
+        .room-card h3 { color: var(--primary-color); font-size: 1em; margin-bottom: 4px; }
+        .room-card .room-desc { font-size: 12px; color: #888; margin-bottom: 8px; min-height: 16px; }
+        .room-card .room-meta { font-size: 11px; color: #aaa; }
+        .room-code { display: inline-block; background: #f0f4f8; color: #4a5568; padding: 2px 7px; border-radius: 4px; font-family: monospace; font-size: 12px; margin-bottom: 4px; }
+        .no-rooms { text-align: center; color: #aaa; font-size: 14px; padding: 20px; }
+
+        .footer { margin-top: 40px; color: #bbb; font-size: 12px; text-align: center; }
+        .footer a { color: #bbb; }
+        .admin-link { position: fixed; bottom: 20px; right: 24px; font-size: 12px; color: #bbb; text-decoration: none; opacity: 0.5; transition: opacity 0.2s; }
         .admin-link:hover { opacity: 1; color: var(--primary-color); }
+
+        @media (max-width: 480px) {
+            h1 { font-size: 2em; }
+            .rooms-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
     <div class="hero">
         <h1 id="site-name">TRPG Card Hub</h1>
         <p class="subtitle" id="site-desc">跑团角色卡管理系统</p>
-        <div class="btn-group">
-            <a href="/create" class="btn btn-primary">🗡️ 创建角色卡</a>
-            <a href="/list" class="btn btn-secondary">📜 角色卡大厅</a>
+    </div>
+
+    <div class="main-btns">
+        <a href="/create" class="btn btn-primary" id="btn-create">🗡️ 创建角色卡</a>
+        <a href="/list" class="btn btn-secondary">📜 全部角色卡</a>
+    </div>
+
+    <div class="rooms-section">
+        <h2>📋 进行中的战役</h2>
+        <div class="rooms-grid" id="rooms-grid">
+            <div class="no-rooms">加载中...</div>
         </div>
     </div>
+
     <div class="footer">
         <p>Open Source · <a href="https://github.com/ZhenWei-Shi/trpg-card-hub" target="_blank">GitHub</a></p>
     </div>
     <a href="/admin" class="admin-link">🛡️ DM 后台</a>
+
     <script>
         fetch('/api/config').then(r => r.json()).then(cfg => {
             const t = cfg.theme;
@@ -43,6 +74,22 @@
             document.title = cfg.app.name;
             document.getElementById('site-name').textContent = cfg.app.name;
             document.getElementById('site-desc').textContent = cfg.app.description;
+        });
+
+        fetch('/api/rooms').then(r => r.json()).then(result => {
+            const grid = document.getElementById('rooms-grid');
+            if (!result.rooms || result.rooms.length === 0) {
+                grid.innerHTML = '<div class="no-rooms">暂无进行中的战役<br>DM 可在后台创建</div>';
+                return;
+            }
+            grid.innerHTML = result.rooms.map(room => `
+                <a href="/room/${room.id}" class="room-card">
+                    <h3>${room.name}</h3>
+                    <div class="room-desc">${room.description || ''}</div>
+                    <span class="room-code">${room.id}</span>
+                    <div class="room-meta">🧑‍🤝‍🧑 ${room.char_count} 位调查员</div>
+                </a>
+            `).join('');
         });
     </script>
 </body>

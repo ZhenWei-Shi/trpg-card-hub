@@ -2,31 +2,53 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>角色卡大厅</title>
     <style>
-        :root { --primary-color: #8b2121; --bg-color: #f4eee1; --border-color: #cbb494; }
-        body { font-family: 'Microsoft YaHei', sans-serif; background-color: var(--bg-color); color: #333; padding: 20px; }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary-color); padding-bottom: 10px; margin-bottom: 20px; }
-        h1 { color: var(--primary-color); margin: 0; }
-        .back-btn { background: #555; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; }
-        .list-container { display: flex; flex-wrap: wrap; gap: 15px; }
-        .char-item { background: white; border: 1px solid var(--border-color); padding: 15px; width: 250px; border-radius: 6px; cursor: pointer; transition: 0.2s; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .char-item:hover { box-shadow: 0 4px 10px rgba(139,33,33,0.3); border-color: var(--primary-color); }
-        .char-item h3 { margin: 0 0 5px 0; color: var(--primary-color); }
-        .realm-tag { color: var(--primary-color); font-weight: bold; margin: 0 0 5px 0; font-size: 14px; }
-        .lock-icon { position: absolute; top: 15px; right: 15px; font-size: 18px; }
-        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: #fff; padding: 20px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; border-radius: 8px; border-top: 5px solid var(--primary-color); }
-        .close-btn { float: right; cursor: pointer; font-size: 20px; font-weight: bold; color: #aaa; }
-        .close-btn:hover { color: red; }
-        .edit-btn { width: 100%; padding: 12px; margin-top: 15px; background: var(--primary-color); color: #fff; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; }
-        .edit-btn:hover { filter: brightness(1.2); }
+        :root { --primary-color: #2d3748; --bg-color: #f5f0e8; --border-color: #a09080; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: var(--bg-color); color: #333; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary-color); padding-bottom: 10px; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        .header-left h1 { color: var(--primary-color); margin: 0; font-size: 1.5em; }
+        .header-left .room-badge { font-size: 12px; color: #888; margin-top: 2px; }
+        .header-right { display: flex; gap: 8px; flex-wrap: wrap; }
+        .back-btn { background: #718096; color: white; padding: 7px 14px; text-decoration: none; border-radius: 5px; font-size: 13px; }
+        .create-btn { background: var(--primary-color); color: white; padding: 7px 14px; text-decoration: none; border-radius: 5px; font-size: 13px; }
+
+        .list-container { display: flex; flex-wrap: wrap; gap: 14px; }
+        .char-item { background: white; border: 1px solid var(--border-color); padding: 15px; width: 240px; border-radius: 8px; cursor: pointer; transition: 0.2s; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.07); }
+        .char-item:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-color: var(--primary-color); transform: translateY(-1px); }
+        .char-item h3 { margin: 0 0 4px 0; color: var(--primary-color); padding-right: 28px; }
+        .realm-tag { color: #718096; font-size: 13px; margin: 0 0 4px 0; }
+        .appearance-text { font-size: 12px; color: #999; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .lock-icon { position: absolute; top: 14px; right: 14px; font-size: 16px; }
+
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
+        .modal-content { background: #fff; padding: 24px; width: 100%; max-width: 480px; max-height: 85vh; overflow-y: auto; border-radius: 10px; border-top: 5px solid var(--primary-color); }
+        .close-btn { float: right; cursor: pointer; font-size: 22px; color: #aaa; line-height: 1; }
+        .close-btn:hover { color: #e53e3e; }
+        .edit-btn { width: 100%; padding: 12px; margin-top: 14px; background: var(--primary-color); color: #fff; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; }
+        .edit-btn:hover { filter: brightness(1.15); }
+
+        /* 移动端适配 */
+        @media (max-width: 600px) {
+            body { padding: 12px; }
+            .char-item { width: 100%; }
+            .list-container { gap: 10px; }
+            .header-left h1 { font-size: 1.2em; }
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1 id="page-title">📜 角色卡大厅</h1>
-        <a href="/" class="back-btn">← 返回主页</a>
+        <div class="header-left">
+            <h1 id="page-title">📜 角色卡大厅</h1>
+            <div class="room-badge" id="room-badge"></div>
+        </div>
+        <div class="header-right">
+            <a href="/" class="back-btn">← 主页</a>
+            <a href="#" class="create-btn" id="create-link">🗡️ 创建角色卡</a>
+        </div>
     </div>
     <div id="loading">加载中...</div>
     <div class="list-container" id="list-container"></div>
@@ -41,27 +63,55 @@
 <script>
     let CONFIG = null;
 
+    // 从 URL 取 room_id（支持 /room/ROOMID 和 /list?room=ROOMID）
+    const pathMatch = window.location.pathname.match(/^\/room\/([^/]+)/);
+    const roomId = pathMatch ? pathMatch[1] : new URLSearchParams(window.location.search).get('room');
+
     async function init() {
         const res = await fetch('/api/config');
         CONFIG = await res.json();
+        applyTheme();
+        await setupRoom();
+        loadList();
+    }
+
+    function applyTheme() {
         const t = CONFIG.theme;
         document.documentElement.style.setProperty('--primary-color', t.primary_color);
         document.documentElement.style.setProperty('--bg-color', t.bg_color);
         document.documentElement.style.setProperty('--border-color', t.border_color);
-        document.title = CONFIG.app.list_title;
-        document.getElementById('page-title').textContent = '📜 ' + CONFIG.app.list_title;
-        loadList();
+    }
+
+    async function setupRoom() {
+        const createLink = document.getElementById('create-link');
+        if (roomId) {
+            createLink.href = `/create?room=${roomId}`;
+            try {
+                const res = await fetch(`/api/room/${roomId}`);
+                if (res.ok) {
+                    const result = await res.json();
+                    document.getElementById('page-title').textContent = `📜 ${result.room.name}`;
+                    document.getElementById('room-badge').textContent = `房间代码：${roomId}${result.room.description ? ' · ' + result.room.description : ''}`;
+                    document.title = result.room.name;
+                }
+            } catch(e) {}
+        } else {
+            createLink.href = '/create';
+            document.getElementById('page-title').textContent = '📜 ' + CONFIG.app.list_title;
+            document.title = CONFIG.app.list_title;
+        }
     }
 
     async function loadList() {
         try {
-            const res = await fetch('/api/list');
+            const url = roomId ? `/api/list?room=${roomId}` : '/api/list';
+            const res = await fetch(url);
             const result = await res.json();
             document.getElementById('loading').style.display = 'none';
             const container = document.getElementById('list-container');
 
             if (!result.list || result.list.length === 0) {
-                container.innerHTML = '<p style="color:#666;">暂无角色卡，快去创建第一张吧！<a href="/create" style="color:var(--primary-color);">→ 创建角色卡</a></p>';
+                container.innerHTML = '<p style="color:#aaa; padding:20px;">暂无角色卡，快去创建第一张吧！</p>';
                 return;
             }
 
@@ -69,16 +119,15 @@
                 const div = document.createElement('div');
                 div.className = 'char-item';
                 div.innerHTML = `
-                    ${data.has_password ? '<span class="lock-icon" title="密码保护">🔒</span>' : '<span class="lock-icon" title="公开">📖</span>'}
+                    ${data.has_password ? '<span class="lock-icon">🔒</span>' : '<span class="lock-icon">📖</span>'}
                     <h3>${data.name}</h3>
-                    <p class="realm-tag">[${data.realm || '未知'}]</p>
-                    <p style="font-size:12px; color:#666; margin:0; text-overflow:ellipsis; white-space:nowrap; overflow:hidden;">${CONFIG.character.fields.appearance.label}: ${data.appearance || '—'}</p>
+                    <p class="realm-tag">${data.realm || '—'}</p>
+                    <p class="appearance-text">${CONFIG.character.fields.appearance.label}：${data.appearance || '—'}</p>
                 `;
                 div.onclick = () => handleCardClick(data);
                 container.appendChild(div);
             });
-        } catch (e) {
-            console.error(e);
+        } catch(e) {
             document.getElementById('loading').innerText = '加载失败，请检查服务器连接。';
         }
     }
@@ -87,16 +136,13 @@
         if (data.has_password) {
             const pwd = prompt(`【${data.name}】设有密码保护，请输入密码查看：`);
             if (pwd === null) return;
-            try {
-                const res = await fetch(`/api/verify/${data.id}`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({password: pwd})
-                });
-                if (!res.ok) { alert('密码错误！'); return; }
-                const result = await res.json();
-                showModal(result.data, pwd);
-            } catch (e) { alert('验证失败，请重试。'); }
+            const res = await fetch(`/api/verify/${data.id}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({password: pwd})
+            });
+            if (!res.ok) { alert('密码错误！'); return; }
+            showModal((await res.json()).data, pwd);
         } else {
             const res = await fetch(`/api/get/${data.id}`);
             const result = await res.json();
@@ -105,22 +151,23 @@
     }
 
     function showModal(data, passedPwd) {
+        const f = CONFIG.character.fields;
+        const statsHtml = CONFIG.character.stats.map(s => `${s.short}:${data.stats?.[s.key] || 0}`).join(' | ');
         const traits = data.traits?.map(t => `${t.name}(${t.grade})`).join('、') || '无';
         const skills = data.skills?.map(s => `<b>${s.name}</b>`).join('，') || '无';
-        const statsHtml = CONFIG.character.stats.map(s => `${s.short}${data.stats?.[s.key] || 0}`).join(' | ');
-        const f = CONFIG.character.fields;
         let editUrl = `/create?id=${data.id}`;
+        if (data.room_id && data.room_id !== 'global') editUrl += `&room=${data.room_id}`;
         if (passedPwd) editUrl += `&pwd=${encodeURIComponent(passedPwd)}`;
 
         document.getElementById('modal-body').innerHTML = `
             <h2 style="color:var(--primary-color); margin-top:0;">${data.name}</h2>
-            <p><strong>${f.realm.label}:</strong> <span style="color:var(--primary-color); font-weight:bold;">${data.realm || '未知'}</span></p>
-            <p><strong>${f.appearance.label}:</strong> ${data.appearance || '—'}</p>
-            <p><strong>${f.background.label}:</strong> ${data.background || '无'}</p>
-            <hr>
-            <p><strong>属性:</strong> ${statsHtml}</p>
-            <p><strong>特性:</strong> ${traits}</p>
-            <p><strong>技能:</strong> ${skills}</p>
+            <p><strong>${f.realm.label}：</strong><span style="color:var(--primary-color); font-weight:bold;">${data.realm || '—'}</span></p>
+            <p><strong>${f.appearance.label}：</strong>${data.appearance || '—'}</p>
+            <p><strong>${f.background.label}：</strong>${data.background || '无'}</p>
+            <hr style="margin:12px 0;">
+            <p><strong>属性：</strong>${statsHtml}</p>
+            <p><strong>特性：</strong>${traits}</p>
+            <p><strong>技能：</strong>${skills}</p>
             <button class="edit-btn" onclick="window.location.href='${editUrl}'">📝 修改此角色卡</button>
         `;
         document.getElementById('modal').style.display = 'flex';

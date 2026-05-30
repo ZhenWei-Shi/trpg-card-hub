@@ -5,52 +5,70 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DM 管理后台</title>
     <style>
-        :root { --primary-color: #2b6cb0; --bg-color: #f0f4f8; --border-color: #bee3f8; }
-        * { box-sizing: border-box; }
-        body { font-family: 'Microsoft YaHei', sans-serif; background: var(--bg-color); color: #2d3748; margin: 0; padding: 20px; }
+        :root { --primary: #2b6cb0; --bg: #f0f4f8; --border: #bee3f8; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: var(--bg); color: #2d3748; }
 
-        /* 登录界面 */
-        .login-wrap { display: flex; align-items: center; justify-content: center; min-height: 80vh; }
-        .login-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 360px; text-align: center; }
-        .login-box h2 { color: var(--primary-color); margin-bottom: 8px; }
+        /* 登录 */
+        .login-wrap { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+        .login-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 340px; text-align: center; }
+        .login-box h2 { color: var(--primary); margin-bottom: 8px; }
         .login-box p { color: #718096; margin-bottom: 24px; font-size: 14px; }
         .login-box input { width: 100%; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 15px; margin-bottom: 12px; }
-        .login-box button { width: 100%; padding: 11px; background: var(--primary-color); color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; font-weight: bold; }
-        .login-box button:hover { filter: brightness(1.1); }
+        .login-box button { width: 100%; padding: 11px; background: var(--primary); color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; font-weight: bold; }
         .login-error { color: #e53e3e; font-size: 13px; margin-top: 8px; display: none; }
 
         /* 管理界面 */
-        .admin-wrap { display: none; max-width: 1100px; margin: 0 auto; }
-        .admin-header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 16px 24px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
-        .admin-header h1 { margin: 0; color: var(--primary-color); font-size: 1.3em; }
-        .header-right { display: flex; gap: 10px; align-items: center; }
-        .stat-badge { background: #ebf8ff; color: var(--primary-color); padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; }
-        .logout-btn { background: #718096; color: white; border: none; padding: 7px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
-        .home-btn { background: #48bb78; color: white; border: none; padding: 7px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; text-decoration: none; }
+        .admin-wrap { display: none; padding: 20px; max-width: 1100px; margin: 0 auto; }
+        .admin-header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 14px 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); flex-wrap: wrap; gap: 10px; }
+        .admin-header h1 { color: var(--primary); font-size: 1.2em; }
+        .header-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn { padding: 7px 14px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; text-decoration: none; display: inline-block; }
+        .btn-blue { background: var(--primary); color: white; }
+        .btn-green { background: #48bb78; color: white; }
+        .btn-gray { background: #718096; color: white; }
+        .btn:hover { filter: brightness(1.1); }
 
-        /* 角色卡列表 */
-        .char-table { width: 100%; background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); overflow: hidden; }
-        .char-table table { width: 100%; border-collapse: collapse; }
-        .char-table th { background: #ebf8ff; color: var(--primary-color); padding: 12px 16px; text-align: left; font-size: 13px; font-weight: bold; border-bottom: 2px solid var(--border-color); }
-        .char-table td { padding: 12px 16px; border-bottom: 1px solid #f0f4f8; font-size: 14px; vertical-align: middle; }
-        .char-table tr:last-child td { border-bottom: none; }
-        .char-table tr:hover td { background: #f7faff; }
-        .char-name { font-weight: bold; color: #2d3748; }
-        .realm-tag { color: #718096; font-size: 12px; }
-        .lock-badge { font-size: 13px; }
-        .stats-text { font-size: 12px; color: #718096; font-family: monospace; }
-        .action-btn { padding: 5px 12px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: bold; }
-        .edit-btn { background: #ebf8ff; color: var(--primary-color); margin-right: 6px; }
-        .edit-btn:hover { background: #bee3f8; }
+        /* Tab */
+        .tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+        .tab { padding: 8px 20px; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 14px; font-weight: bold; border: none; background: #cbd5e0; color: #4a5568; }
+        .tab.active { background: white; color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+        .tab-content { background: white; border-radius: 0 10px 10px 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); overflow: hidden; display: none; }
+        .tab-content.active { display: block; }
+
+        /* 房间管理 */
+        .room-create { padding: 16px 20px; border-bottom: 1px solid #f0f4f8; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .room-create input { flex: 1; min-width: 160px; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; }
+        .rooms-list { padding: 16px 20px; }
+        .room-item { display: flex; align-items: center; justify-content: space-between; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 10px; gap: 10px; flex-wrap: wrap; }
+        .room-info h3 { font-size: 15px; color: #2d3748; margin-bottom: 3px; }
+        .room-code { font-family: monospace; background: #ebf8ff; color: var(--primary); padding: 2px 8px; border-radius: 4px; font-size: 13px; }
+        .room-meta { font-size: 12px; color: #a0aec0; margin-top: 3px; }
+        .room-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+        /* 角色卡表格 */
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #ebf8ff; color: var(--primary); padding: 11px 14px; text-align: left; font-size: 13px; border-bottom: 2px solid var(--border); }
+        td { padding: 11px 14px; border-bottom: 1px solid #f0f4f8; font-size: 13px; vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #f7faff; }
+        .action-btn { padding: 4px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .edit-btn { background: #ebf8ff; color: var(--primary); margin-right: 4px; }
         .del-btn { background: #fff5f5; color: #e53e3e; }
-        .del-btn:hover { background: #fed7d7; }
-        .empty-tip { text-align: center; padding: 40px; color: #a0aec0; }
-        .time-text { font-size: 11px; color: #a0aec0; }
+        .empty-tip { text-align: center; padding: 32px; color: #a0aec0; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; }
+        .badge-lock { background: #fff5f5; color: #e53e3e; }
+        .badge-open { background: #f0fff4; color: #48bb78; }
+        .stat-badge { background: #ebf8ff; color: var(--primary); padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+
+        @media (max-width: 600px) {
+            .admin-wrap { padding: 10px; }
+            th, td { padding: 8px 10px; font-size: 12px; }
+        }
     </style>
 </head>
 <body>
 
-<!-- 登录 -->
 <div class="login-wrap" id="login-wrap">
     <div class="login-box">
         <h2>🛡️ DM 管理后台</h2>
@@ -61,31 +79,49 @@
     </div>
 </div>
 
-<!-- 管理面板 -->
 <div class="admin-wrap" id="admin-wrap">
     <div class="admin-header">
         <h1>🛡️ DM 管理后台</h1>
-        <div class="header-right">
-            <span class="stat-badge" id="char-count">共 0 个角色卡</span>
-            <a href="/" class="home-btn">← 返回主页</a>
-            <button class="logout-btn" onclick="doLogout()">退出登录</button>
+        <div class="header-btns">
+            <span class="stat-badge" id="char-count">0 个角色卡</span>
+            <a href="/" class="btn btn-green">← 返回主页</a>
+            <button class="btn btn-gray" onclick="doLogout()">退出</button>
         </div>
     </div>
 
-    <div class="char-table">
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('rooms')">📋 战役房间</button>
+        <button class="tab" onclick="switchTab('chars')">🧑‍🤝‍🧑 所有角色卡</button>
+    </div>
+
+    <!-- 战役房间 tab -->
+    <div class="tab-content active" id="tab-rooms">
+        <div class="room-create">
+            <input type="text" id="room-name" placeholder="战役名称（必填）">
+            <input type="text" id="room-desc" placeholder="简介（可选）">
+            <button class="btn btn-blue" onclick="createRoom()">+ 创建战役</button>
+        </div>
+        <div class="rooms-list" id="rooms-list">
+            <div class="empty-tip">加载中...</div>
+        </div>
+    </div>
+
+    <!-- 角色卡 tab -->
+    <div class="tab-content" id="tab-chars">
         <table>
             <thead>
                 <tr>
                     <th>角色名</th>
-                    <th>境界/职业</th>
+                    <th>职业/境界</th>
                     <th>属性</th>
                     <th>密码</th>
+                    <th>所属战役</th>
                     <th>创建时间</th>
                     <th>操作</th>
                 </tr>
             </thead>
             <tbody id="char-tbody">
-                <tr><td colspan="6" class="empty-tip">加载中...</td></tr>
+                <tr><td colspan="7" class="empty-tip">加载中...</td></tr>
             </tbody>
         </table>
     </div>
@@ -93,11 +129,17 @@
 
 <script>
     let CONFIG = null;
+    let allRooms = [];
+
+    function switchTab(tab) {
+        document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', ['rooms','chars'][i] === tab));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById('tab-' + tab).classList.add('active');
+    }
 
     async function init() {
         const res = await fetch('/api/config');
         CONFIG = await res.json();
-        // 尝试自动加载（如果 session 还在）
         tryLoadAdmin();
     }
 
@@ -107,7 +149,6 @@
             const result = await res.json();
             showAdmin(result.list);
         }
-        // 401 则保持登录界面
     }
 
     async function doLogin() {
@@ -120,8 +161,7 @@
         if (res.ok) {
             document.getElementById('login-error').style.display = 'none';
             const listRes = await fetch('/api/admin/list');
-            const result = await listRes.json();
-            showAdmin(result.list);
+            showAdmin((await listRes.json()).list);
         } else {
             document.getElementById('login-error').style.display = 'block';
         }
@@ -134,37 +174,103 @@
         document.getElementById('admin-pwd').value = '';
     }
 
-    function showAdmin(list) {
+    async function showAdmin(charList) {
         document.getElementById('login-wrap').style.display = 'none';
         document.getElementById('admin-wrap').style.display = 'block';
-        document.getElementById('char-count').textContent = `共 ${list.length} 个角色卡`;
-        renderTable(list);
+        document.getElementById('char-count').textContent = `${charList.length} 个角色卡`;
+        renderCharTable(charList);
+        await loadRooms();
     }
 
-    function renderTable(list) {
-        const tbody = document.getElementById('char-tbody');
-        if (list.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="empty-tip">暂无角色卡</td></tr>';
+    async function loadRooms() {
+        const res = await fetch('/api/rooms');
+        const result = await res.json();
+        allRooms = result.rooms || [];
+        renderRooms(allRooms);
+    }
+
+    function renderRooms(rooms) {
+        const container = document.getElementById('rooms-list');
+        if (rooms.length === 0) {
+            container.innerHTML = '<div class="empty-tip">暂无战役，点击上方"创建战役"开始</div>';
             return;
         }
+        container.innerHTML = rooms.map(r => `
+            <div class="room-item">
+                <div class="room-info">
+                    <h3>${r.name} <span class="room-code">${r.id}</span></h3>
+                    ${r.description ? `<div style="font-size:13px; color:#718096; margin-top:2px;">${r.description}</div>` : ''}
+                    <div class="room-meta">🧑‍🤝‍🧑 ${r.char_count} 位调查员 · 创建于 ${r.created_at?.substring(0,10)}</div>
+                </div>
+                <div class="room-actions">
+                    <a href="/room/${r.id}" class="btn btn-blue" target="_blank">进入</a>
+                    <button class="btn btn-gray" onclick="copyRoomLink('${r.id}')">复制链接</button>
+                    <button class="action-btn del-btn" onclick="deleteRoom('${r.id}', '${r.name}')">删除</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function createRoom() {
+        const name = document.getElementById('room-name').value.trim();
+        if (!name) { alert('请输入战役名称'); return; }
+        const desc = document.getElementById('room-desc').value.trim();
+        const res = await fetch('/api/room/create', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({name, description: desc})
+        });
+        if (res.ok) {
+            document.getElementById('room-name').value = '';
+            document.getElementById('room-desc').value = '';
+            await loadRooms();
+        } else {
+            alert('创建失败，请确认已登录');
+        }
+    }
+
+    async function deleteRoom(id, name) {
+        if (!confirm(`删除战役【${name}】将同时删除其中所有角色卡，确定吗？`)) return;
+        const res = await fetch(`/api/admin/room/delete/${id}`, {method: 'DELETE'});
+        if (res.ok) {
+            await loadRooms();
+            const listRes = await fetch('/api/admin/list');
+            const result = await listRes.json();
+            document.getElementById('char-count').textContent = `${result.list.length} 个角色卡`;
+            renderCharTable(result.list);
+        }
+    }
+
+    function copyRoomLink(roomId) {
+        const url = `${window.location.origin}/room/${roomId}`;
+        navigator.clipboard.writeText(url).then(() => alert(`已复制：${url}`));
+    }
+
+    function renderCharTable(list) {
+        const tbody = document.getElementById('char-tbody');
+        if (list.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-tip">暂无角色卡</td></tr>';
+            return;
+        }
+        const roomMap = {};
+        allRooms.forEach(r => roomMap[r.id] = r.name);
 
         tbody.innerHTML = list.map(char => {
             const statsHtml = CONFIG
                 ? CONFIG.character.stats.map(s => `${s.short}:${char.stats?.[s.key] || 0}`).join(' ')
                 : '';
-            const hasPwd = char.password && char.password.trim();
-            const created = char.created_at ? char.created_at.substring(0, 16) : '—';
-            const editUrl = `/create?id=${char.id}${hasPwd ? '&pwd=' + encodeURIComponent(char.password) : ''}`;
+            const hasPwd = char.password?.trim();
+            const created = char.created_at?.substring(0, 10) || '—';
+            const roomName = char.room_id && char.room_id !== 'global' ? (roomMap[char.room_id] || char.room_id) : '—';
+            const editUrl = `/create?id=${char.id}${hasPwd ? '&pwd=' + encodeURIComponent(char.password) : ''}${char.room_id && char.room_id !== 'global' ? '&room=' + char.room_id : ''}`;
 
             return `<tr>
-                <td>
-                    <div class="char-name">${char.name}</div>
-                    <div class="realm-tag">${char.appearance || ''}</div>
-                </td>
+                <td><div style="font-weight:bold;">${char.name}</div><div style="font-size:11px; color:#999;">${char.appearance || ''}</div></td>
                 <td>${char.realm || '—'}</td>
-                <td class="stats-text">${statsHtml}</td>
-                <td class="lock-badge">${hasPwd ? `🔒 ${char.password}` : '📖 公开'}</td>
-                <td class="time-text">${created}</td>
+                <td style="font-family:monospace; font-size:11px; color:#718096;">${statsHtml}</td>
+                <td>${hasPwd ? `<span class="badge badge-lock">🔒 ${char.password}</span>` : '<span class="badge badge-open">📖 公开</span>'}</td>
+                <td style="font-size:12px;">${roomName}</td>
+                <td style="font-size:11px; color:#a0aec0;">${created}</td>
                 <td>
                     <button class="action-btn edit-btn" onclick="window.location.href='${editUrl}'">编辑</button>
                     <button class="action-btn del-btn" onclick="deleteChar('${char.id}', '${char.name}')">删除</button>
@@ -174,16 +280,13 @@
     }
 
     async function deleteChar(id, name) {
-        if (!confirm(`确定删除【${name}】的角色卡？此操作不可撤销。`)) return;
-        const res = await fetch(`/api/admin/delete/${id}`, {method: 'DELETE'});
-        if (res.ok) {
-            const listRes = await fetch('/api/admin/list');
-            const result = await listRes.json();
-            document.getElementById('char-count').textContent = `共 ${result.list.length} 个角色卡`;
-            renderTable(result.list);
-        } else {
-            alert('删除失败');
-        }
+        if (!confirm(`确定删除【${name}】的角色卡？`)) return;
+        await fetch(`/api/admin/delete/${id}`, {method: 'DELETE'});
+        const listRes = await fetch('/api/admin/list');
+        const result = await listRes.json();
+        document.getElementById('char-count').textContent = `${result.list.length} 个角色卡`;
+        renderCharTable(result.list);
+        await loadRooms();
     }
 
     init();

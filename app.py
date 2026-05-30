@@ -1,6 +1,8 @@
 import os
 import json
 import uuid
+import random
+import string
 import sqlite3
 from functools import wraps
 from flask import Flask, request, jsonify, render_template, session
@@ -24,17 +26,35 @@ def get_db():
     return conn
 
 
+def generate_room_id():
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+
+
 def init_db():
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     with get_db() as conn:
         conn.execute('''
+            CREATE TABLE IF NOT EXISTS rooms (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                description TEXT DEFAULT '',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        conn.execute('''
             CREATE TABLE IF NOT EXISTS characters (
                 id TEXT PRIMARY KEY,
                 data TEXT NOT NULL,
+                room_id TEXT DEFAULT 'global',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+        # 兼容旧数据库：添加 room_id 列
+        try:
+            conn.execute("ALTER TABLE characters ADD COLUMN room_id TEXT DEFAULT 'global'")
+        except Exception:
+            pass
         conn.commit()
 
 
@@ -61,6 +81,10 @@ def create_page():
 def list_page():
     return render_template('char_list.html')
 
+@app.route('/room/<room_id>')
+def room_page(room_id):
+    return render_template('char_list.html')
+
 @app.route('/admin')
 def admin_page():
     return render_template('admin.html')
@@ -73,6 +97,57 @@ def api_config():
     return jsonify(get_config())
 
 
+# ── 房间 API ──────────────────────────────────────────────────────────────────
+
+@app.route('/api/rooms', methods=['GET'])
+def get_rooms():
+    with get_db() as conn:
+        rows = conn.execute('''
+            SELECT r.id, r.name, r.description, r.created_at,
+                   COUNT(c.id) as char_count
+            FROM rooms r
+            LEFT JOIN characters c ON c.room_id = r.id
+            GROUP BY r.id
+            ORDER BY r.created_at DESC
+        ''').fetchall()
+    return jsonify({"status": "success", "rooms": [dict(r) for r in rows]})
+
+
+@app.route('/api/room/create', methods=['POST'])
+@admin_required
+def create_room():
+    data = request.get_json()
+    room_id = generate_room_id()
+    name = data.get('name', '未命名战役')
+    description = data.get('description', '')
+    with get_db() as conn:
+        conn.execute(
+            'INSERT INTO rooms (id, name, description) VALUES (?, ?, ?)',
+            (room_id, name, description)
+        )
+        conn.commit()
+    return jsonify({"status": "success", "id": room_id, "name": name})
+
+
+@app.route('/api/room/<room_id>', methods=['GET'])
+def get_room(room_id):
+    with get_db() as conn:
+        row = conn.execute('SELECT * FROM rooms WHERE id = ?', (room_id,)).fetchone()
+    if not row:
+        return jsonify({"status": "error", "message": "Room not found"}), 404
+    return jsonify({"status": "success", "room": dict(row)})
+
+
+@app.route('/api/admin/room/delete/<room_id>', methods=['DELETE'])
+@admin_required
+def admin_delete_room(room_id):
+    with get_db() as conn:
+        conn.execute('DELETE FROM characters WHERE room_id = ?', (room_id,))
+        conn.execute('DELETE FROM rooms WHERE id = ?', (room_id,))
+        conn.commit()
+    return jsonify({"status": "success"})
+
+
 # ── 角色卡 API ────────────────────────────────────────────────────────────────
 
 @app.route('/api/save', methods=['POST'])
@@ -81,12 +156,14 @@ def save_character():
         req_data = request.get_json()
         char_id = req_data.get('id')
         char_data = req_data.get('data', {})
+        room_id = req_data.get('room_id', 'global')
 
         if not char_id:
             char_id = str(uuid.uuid4())
 
         processed_data = {
             "id": char_id,
+            "room_id": room_id,
             "name": char_data.get('name', '无名氏'),
             "realm": char_data.get('realm', ''),
             "appearance": char_data.get('appearance', ''),
@@ -103,13 +180,13 @@ def save_character():
             existing = conn.execute('SELECT id FROM characters WHERE id = ?', (char_id,)).fetchone()
             if existing:
                 conn.execute(
-                    'UPDATE characters SET data = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-                    (json.dumps(processed_data, ensure_ascii=False), char_id)
+                    'UPDATE characters SET data = ?, room_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+                    (json.dumps(processed_data, ensure_ascii=False), room_id, char_id)
                 )
             else:
                 conn.execute(
-                    'INSERT INTO characters (id, data) VALUES (?, ?)',
-                    (char_id, json.dumps(processed_data, ensure_ascii=False))
+                    'INSERT INTO characters (id, data, room_id) VALUES (?, ?, ?)',
+                    (char_id, json.dumps(processed_data, ensure_ascii=False), room_id)
                 )
             conn.commit()
 
@@ -148,8 +225,18 @@ def verify_password(char_id):
 
 @app.route('/api/list', methods=['GET'])
 def get_all_characters():
+    room_id = request.args.get('room')
     with get_db() as conn:
-        rows = conn.execute('SELECT data FROM characters ORDER BY created_at DESC').fetchall()
+        if room_id:
+            rows = conn.execute(
+                "SELECT data FROM characters WHERE room_id = ? ORDER BY created_at DESC",
+                (room_id,)
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                'SELECT data FROM characters ORDER BY created_at DESC'
+            ).fetchall()
+
     result = []
     for row in rows:
         char_data = json.loads(row['data'])
@@ -200,7 +287,7 @@ def admin_logout():
 def admin_list():
     with get_db() as conn:
         rows = conn.execute(
-            'SELECT data, created_at, updated_at FROM characters ORDER BY created_at DESC'
+            'SELECT data, room_id, created_at, updated_at FROM characters ORDER BY created_at DESC'
         ).fetchall()
     result = []
     for row in rows:
