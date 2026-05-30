@@ -1,4 +1,7 @@
 {
+  "admin": {
+    "password": "dm123456"
+  },
   "app": {
     "name": "岁月史书",
     "description": "武侠跑团角色卡管理系统",

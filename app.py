@@ -2,9 +2,11 @@ import os
 import json
 import uuid
 import sqlite3
-from flask import Flask, request, jsonify, render_template
+from functools import wraps
+from flask import Flask, request, jsonify, render_template, session
 
 app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-change-in-production')
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, 'data', 'characters.db')
@@ -36,25 +38,42 @@ def init_db():
         conn.commit()
 
 
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get('is_admin'):
+            return jsonify({"status": "error", "message": "Unauthorized"}), 401
+        return f(*args, **kwargs)
+    return decorated
+
+
+# ── 页面路由 ──────────────────────────────────────────────────────────────────
+
 @app.route('/')
 def index():
     return render_template('index.html')
-
 
 @app.route('/create')
 def create_page():
     return render_template('player.html')
 
-
 @app.route('/list')
 def list_page():
     return render_template('char_list.html')
 
+@app.route('/admin')
+def admin_page():
+    return render_template('admin.html')
+
+
+# ── 配置 API ──────────────────────────────────────────────────────────────────
 
 @app.route('/api/config')
 def api_config():
     return jsonify(get_config())
 
+
+# ── 角色卡 API ────────────────────────────────────────────────────────────────
 
 @app.route('/api/save', methods=['POST'])
 def save_character():
@@ -103,18 +122,13 @@ def save_character():
 @app.route('/api/get/<char_id>', methods=['GET'])
 def get_character(char_id):
     pwd = request.args.get('pwd', '')
-
     with get_db() as conn:
         row = conn.execute('SELECT data FROM characters WHERE id = ?', (char_id,)).fetchone()
-
     if not row:
         return jsonify({"status": "error", "message": "Character not found"}), 404
-
     char_data = json.loads(row['data'])
-
     if char_data.get('password') and char_data['password'] != pwd:
         return jsonify({"status": "error", "code": "WRONG_PASSWORD"}), 403
-
     return jsonify({"status": "success", "data": char_data})
 
 
@@ -122,18 +136,13 @@ def get_character(char_id):
 def verify_password(char_id):
     data = request.get_json()
     pwd = data.get('password', '')
-
     with get_db() as conn:
         row = conn.execute('SELECT data FROM characters WHERE id = ?', (char_id,)).fetchone()
-
     if not row:
         return jsonify({"status": "error"}), 404
-
     char_data = json.loads(row['data'])
-
     if char_data.get('password') == pwd:
         return jsonify({"status": "success", "data": char_data})
-
     return jsonify({"status": "error", "message": "Wrong password"}), 403
 
 
@@ -141,7 +150,6 @@ def verify_password(char_id):
 def get_all_characters():
     with get_db() as conn:
         rows = conn.execute('SELECT data FROM characters ORDER BY created_at DESC').fetchall()
-
     result = []
     for row in rows:
         char_data = json.loads(row['data'])
@@ -155,7 +163,6 @@ def get_all_characters():
             "traits": char_data.get('traits', []),
             "skills": char_data.get('skills', [])
         })
-
     return jsonify({"status": "success", "list": result})
 
 
@@ -164,10 +171,55 @@ def delete_character(char_id):
     with get_db() as conn:
         result = conn.execute('DELETE FROM characters WHERE id = ?', (char_id,)).rowcount
         conn.commit()
-
     if result:
         return jsonify({"status": "success"})
     return jsonify({"status": "error", "message": "Character not found"}), 404
+
+
+# ── DM 管理后台 API ───────────────────────────────────────────────────────────
+
+@app.route('/api/admin/login', methods=['POST'])
+def admin_login():
+    data = request.get_json()
+    pwd = data.get('password', '')
+    config = get_config()
+    if pwd == config.get('admin', {}).get('password', ''):
+        session['is_admin'] = True
+        return jsonify({"status": "success"})
+    return jsonify({"status": "error", "message": "密码错误"}), 403
+
+
+@app.route('/api/admin/logout', methods=['POST'])
+def admin_logout():
+    session.pop('is_admin', None)
+    return jsonify({"status": "success"})
+
+
+@app.route('/api/admin/list', methods=['GET'])
+@admin_required
+def admin_list():
+    with get_db() as conn:
+        rows = conn.execute(
+            'SELECT data, created_at, updated_at FROM characters ORDER BY created_at DESC'
+        ).fetchall()
+    result = []
+    for row in rows:
+        char_data = json.loads(row['data'])
+        char_data['created_at'] = row['created_at']
+        char_data['updated_at'] = row['updated_at']
+        result.append(char_data)
+    return jsonify({"status": "success", "list": result})
+
+
+@app.route('/api/admin/delete/<char_id>', methods=['DELETE'])
+@admin_required
+def admin_delete(char_id):
+    with get_db() as conn:
+        result = conn.execute('DELETE FROM characters WHERE id = ?', (char_id,)).rowcount
+        conn.commit()
+    if result:
+        return jsonify({"status": "success"})
+    return jsonify({"status": "error"}), 404
 
 
 if __name__ == '__main__':

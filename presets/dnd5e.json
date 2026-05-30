@@ -1,0 +1,64 @@
+{
+  "admin": {
+    "password": "changeme"
+  },
+  "app": {
+    "name": "D&D 5e 角色卡",
+    "description": "Dungeons & Dragons 5th Edition",
+    "list_title": "冒险者名录"
+  },
+  "theme": {
+    "primary_color": "#7b2d00",
+    "bg_color": "#fdf6e3",
+    "border_color": "#c8a97e"
+  },
+  "character": {
+    "stats": [
+      {"key": "str", "label": "力量 STR", "short": "STR", "min": 1, "default": 10},
+      {"key": "dex", "label": "敏捷 DEX", "short": "DEX", "min": 1, "default": 10},
+      {"key": "con", "label": "体质 CON", "short": "CON", "min": 1, "default": 10},
+      {"key": "int", "label": "智力 INT", "short": "INT", "min": 1, "default": 10},
+      {"key": "wis", "label": "感知 WIS", "short": "WIS", "min": 1, "default": 10},
+      {"key": "cha", "label": "魅力 CHA", "short": "CHA", "min": 1, "default": 10}
+    ],
+    "fields": {
+      "realm":      {"label": "职业/等级", "placeholder": "例如：战士 Lv.5 / 游荡者 Lv.3"},
+      "appearance": {"label": "种族/外貌", "placeholder": "例如：精灵，银发蓝眸，身形修长"},
+      "background": {"label": "背景故事", "placeholder": "角色的出身、经历与动机"}
+    }
+  },
+  "currency": {
+    "enabled": true,
+    "units": [
+      {"key": "pp", "label": "铂金 PP", "rate": 1000},
+      {"key": "gp", "label": "金币 GP", "rate": 100},
+      {"key": "ep", "label": "琥珀 EP", "rate": 50},
+      {"key": "sp", "label": "银币 SP", "rate": 10},
+      {"key": "cp", "label": "铜币 CP", "rate": 1}
+    ]
+  },
+  "reference": {
+    "title": "规则速查",
+    "sections": [
+      {
+        "title": "属性调整值",
+        "items": [
+          "1(-5)  2-3(-4)  4-5(-3)  6-7(-2)",
+          "8-9(-1)  10-11(+0)  12-13(+1)",
+          "14-15(+2)  16-17(+3)  18-19(+4)",
+          "20-21(+5)  22-23(+6)"
+        ]
+      },
+      {
+        "title": "熟练加值",
+        "items": [
+          "Lv.1-4：+2",
+          "Lv.5-8：+3",
+          "Lv.9-12：+4",
+          "Lv.13-16：+5",
+          "Lv.17-20：+6"
+        ]
+      }
+    ]
+  }
+}

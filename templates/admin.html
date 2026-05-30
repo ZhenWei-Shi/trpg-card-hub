@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DM 管理后台</title>
+    <style>
+        :root { --primary-color: #2b6cb0; --bg-color: #f0f4f8; --border-color: #bee3f8; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: var(--bg-color); color: #2d3748; margin: 0; padding: 20px; }
+
+        /* 登录界面 */
+        .login-wrap { display: flex; align-items: center; justify-content: center; min-height: 80vh; }
+        .login-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 360px; text-align: center; }
+        .login-box h2 { color: var(--primary-color); margin-bottom: 8px; }
+        .login-box p { color: #718096; margin-bottom: 24px; font-size: 14px; }
+        .login-box input { width: 100%; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 15px; margin-bottom: 12px; }
+        .login-box button { width: 100%; padding: 11px; background: var(--primary-color); color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; font-weight: bold; }
+        .login-box button:hover { filter: brightness(1.1); }
+        .login-error { color: #e53e3e; font-size: 13px; margin-top: 8px; display: none; }
+
+        /* 管理界面 */
+        .admin-wrap { display: none; max-width: 1100px; margin: 0 auto; }
+        .admin-header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 16px 24px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+        .admin-header h1 { margin: 0; color: var(--primary-color); font-size: 1.3em; }
+        .header-right { display: flex; gap: 10px; align-items: center; }
+        .stat-badge { background: #ebf8ff; color: var(--primary-color); padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; }
+        .logout-btn { background: #718096; color: white; border: none; padding: 7px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .home-btn { background: #48bb78; color: white; border: none; padding: 7px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; text-decoration: none; }
+
+        /* 角色卡列表 */
+        .char-table { width: 100%; background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); overflow: hidden; }
+        .char-table table { width: 100%; border-collapse: collapse; }
+        .char-table th { background: #ebf8ff; color: var(--primary-color); padding: 12px 16px; text-align: left; font-size: 13px; font-weight: bold; border-bottom: 2px solid var(--border-color); }
+        .char-table td { padding: 12px 16px; border-bottom: 1px solid #f0f4f8; font-size: 14px; vertical-align: middle; }
+        .char-table tr:last-child td { border-bottom: none; }
+        .char-table tr:hover td { background: #f7faff; }
+        .char-name { font-weight: bold; color: #2d3748; }
+        .realm-tag { color: #718096; font-size: 12px; }
+        .lock-badge { font-size: 13px; }
+        .stats-text { font-size: 12px; color: #718096; font-family: monospace; }
+        .action-btn { padding: 5px 12px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .edit-btn { background: #ebf8ff; color: var(--primary-color); margin-right: 6px; }
+        .edit-btn:hover { background: #bee3f8; }
+        .del-btn { background: #fff5f5; color: #e53e3e; }
+        .del-btn:hover { background: #fed7d7; }
+        .empty-tip { text-align: center; padding: 40px; color: #a0aec0; }
+        .time-text { font-size: 11px; color: #a0aec0; }
+    </style>
+</head>
+<body>
+
+<!-- 登录 -->
+<div class="login-wrap" id="login-wrap">
+    <div class="login-box">
+        <h2>🛡️ DM 管理后台</h2>
+        <p>请输入 DM 密码登录</p>
+        <input type="password" id="admin-pwd" placeholder="DM 密码" onkeydown="if(event.key==='Enter') doLogin()">
+        <button onclick="doLogin()">登录</button>
+        <div class="login-error" id="login-error">密码错误，请重试</div>
+    </div>
+</div>
+
+<!-- 管理面板 -->
+<div class="admin-wrap" id="admin-wrap">
+    <div class="admin-header">
+        <h1>🛡️ DM 管理后台</h1>
+        <div class="header-right">
+            <span class="stat-badge" id="char-count">共 0 个角色卡</span>
+            <a href="/" class="home-btn">← 返回主页</a>
+            <button class="logout-btn" onclick="doLogout()">退出登录</button>
+        </div>
+    </div>
+
+    <div class="char-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>角色名</th>
+                    <th>境界/职业</th>
+                    <th>属性</th>
+                    <th>密码</th>
+                    <th>创建时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="char-tbody">
+                <tr><td colspan="6" class="empty-tip">加载中...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let CONFIG = null;
+
+    async function init() {
+        const res = await fetch('/api/config');
+        CONFIG = await res.json();
+        // 尝试自动加载（如果 session 还在）
+        tryLoadAdmin();
+    }
+
+    async function tryLoadAdmin() {
+        const res = await fetch('/api/admin/list');
+        if (res.ok) {
+            const result = await res.json();
+            showAdmin(result.list);
+        }
+        // 401 则保持登录界面
+    }
+
+    async function doLogin() {
+        const pwd = document.getElementById('admin-pwd').value;
+        const res = await fetch('/api/admin/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({password: pwd})
+        });
+        if (res.ok) {
+            document.getElementById('login-error').style.display = 'none';
+            const listRes = await fetch('/api/admin/list');
+            const result = await listRes.json();
+            showAdmin(result.list);
+        } else {
+            document.getElementById('login-error').style.display = 'block';
+        }
+    }
+
+    async function doLogout() {
+        await fetch('/api/admin/logout', {method: 'POST'});
+        document.getElementById('admin-wrap').style.display = 'none';
+        document.getElementById('login-wrap').style.display = 'flex';
+        document.getElementById('admin-pwd').value = '';
+    }
+
+    function showAdmin(list) {
+        document.getElementById('login-wrap').style.display = 'none';
+        document.getElementById('admin-wrap').style.display = 'block';
+        document.getElementById('char-count').textContent = `共 ${list.length} 个角色卡`;
+        renderTable(list);
+    }
+
+    function renderTable(list) {
+        const tbody = document.getElementById('char-tbody');
+        if (list.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-tip">暂无角色卡</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = list.map(char => {
+            const statsHtml = CONFIG
+                ? CONFIG.character.stats.map(s => `${s.short}:${char.stats?.[s.key] || 0}`).join(' ')
+                : '';
+            const hasPwd = char.password && char.password.trim();
+            const created = char.created_at ? char.created_at.substring(0, 16) : '—';
+            const editUrl = `/create?id=${char.id}${hasPwd ? '&pwd=' + encodeURIComponent(char.password) : ''}`;
+
+            return `<tr>
+                <td>
+                    <div class="char-name">${char.name}</div>
+                    <div class="realm-tag">${char.appearance || ''}</div>
+                </td>
+                <td>${char.realm || '—'}</td>
+                <td class="stats-text">${statsHtml}</td>
+                <td class="lock-badge">${hasPwd ? `🔒 ${char.password}` : '📖 公开'}</td>
+                <td class="time-text">${created}</td>
+                <td>
+                    <button class="action-btn edit-btn" onclick="window.location.href='${editUrl}'">编辑</button>
+                    <button class="action-btn del-btn" onclick="deleteChar('${char.id}', '${char.name}')">删除</button>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+
+    async function deleteChar(id, name) {
+        if (!confirm(`确定删除【${name}】的角色卡？此操作不可撤销。`)) return;
+        const res = await fetch(`/api/admin/delete/${id}`, {method: 'DELETE'});
+        if (res.ok) {
+            const listRes = await fetch('/api/admin/list');
+            const result = await listRes.json();
+            document.getElementById('char-count').textContent = `共 ${result.list.length} 个角色卡`;
+            renderTable(result.list);
+        } else {
+            alert('删除失败');
+        }
+    }
+
+    init();
+</script>
+</body>
+</html>
