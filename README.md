@@ -27,6 +27,12 @@ Narrative and homebrew TTRPGs have no dedicated tooling. Players either handwrit
 | **Password protection** | Each sheet can be locked with a password; GM can always view all sheets |
 | **GM dashboard** | Admin panel with full party overview, room management, and rule configuration |
 
+### Character Sheet (player view)
+![Character sheet creation form](assets/screenshot-create.png)
+
+### GM Admin Panel — Rule Configuration
+![GM admin panel showing the rule config editor](assets/screenshot-admin.png)
+
 ---
 
 ## Tech Stack
