@@ -1,135 +1,128 @@
 # TRPG Card Hub
 
-**专为口述团和自制规则设计的在线角色卡共享系统**
+**A config-driven, browser-based character sheet system for tabletop RPGs with custom rulesets.**
 
-DM 在后台配置规则，玩家手机打开链接填卡——不需要安装任何软件，不需要传 Excel 文件。
-
----
-
-## 为什么做这个
-
-口述团和小规则跑团通常没有专属工具支持。玩家要么手写卡，要么用 Excel 本地存储。出门在外无法查看角色卡，DM 也难以统一管理所有玩家的角色信息。
-
-这个系统解决的核心问题：
-- 玩家离家时用手机查看自己的角色卡
-- DM 在一个页面看到所有玩家的角色状态
-- 任何自制规则都可以在后台配置，无需改代码
+No app installs. No spreadsheet files. The GM configures the rules in a web UI; players fill in their sheets from any device via a shared URL.
 
 ---
 
-## 功能
+## Problem
 
-- **后台规则配置** — 设置属性名称、初始值、说明文字，开关显示模块，调整主题颜色
-- **战役房间系统** — DM 创建房间，复制邀请链接发给玩家，角色卡按战役归档
-- **角色卡共享** — 所有数据存在服务器，URL 即档案，手机直接访问
-- **密码保护** — 每张角色卡可设密码，保护隐私信息
-- **DM 总览** — 后台查看所有玩家角色卡，包含属性和密码
+Narrative and homebrew TTRPGs have no dedicated tooling. Players either handwrite character sheets or maintain local Excel files — neither option works when players are away from home or the GM needs a quick overview of the whole party.
+
+**This project solves three specific problems:**
+- Players can view and update their character sheets from a phone, anywhere
+- The GM sees every character in one dashboard
+- Any custom ruleset can be configured through the admin UI — no code changes needed
 
 ---
 
-## 部署方式
+## Features
 
-### 本地运行（开发 / 局域网使用）
+| Feature | Details |
+|---|---|
+| **Config-driven UI** | GM sets attribute names, default values, field labels, visible sections, and theme colors from a visual editor |
+| **Campaign room system** | GM creates a room, shares the invite link; characters are scoped to that campaign |
+| **Shared character sheets** | All data lives on the server; a URL is the character sheet |
+| **Password protection** | Each sheet can be locked with a password; GM can always view all sheets |
+| **GM dashboard** | Admin panel with full party overview, room management, and rule configuration |
+
+---
+
+## Tech Stack
+
+- **Backend:** Python 3.11 / Flask, SQLite
+- **Frontend:** Vanilla HTML/CSS/JS (zero framework dependencies)
+- **Deploy:** Docker + gunicorn; includes `railway.toml` and `render.yaml` for one-click cloud deployment
+
+---
+
+## Architecture
+
+The entire UI is driven by a single `config.json`. When the GM saves a config change in the admin panel, all players see the updated form on next page load — no redeployment needed.
+
+```
+config.json
+  └── app name, theme colors
+  └── character.stats[]     → renders attribute inputs + descriptions
+  └── character.fields{}    → labels for occupation, appearance, backstory fields
+  └── character.sections{}  → show/hide traits / skills / items sections
+  └── skill_mode            → "generic" | "coc" | "dnd"
+  └── currency, reference   → optional sidebar modules
+```
+
+The `admin_required` decorator protects all write endpoints; the GM password lives in `config.json` and is never exposed through the config API.
+
+---
+
+## Running Locally
 
 ```bash
-# Python 直接运行
+# Python
 pip install -r requirements.txt
 python app.py
+# → http://localhost:5000
 
-# 或 Docker
+# Docker
 docker-compose up -d
 ```
 
-访问 `http://localhost:5000`
+Default GM password: `dm123456` — change it in `config.json` before deploying.
 
 ---
 
-### 云部署（推荐 · 让玩家随时访问）
+## Cloud Deployment
 
-> 云部署后服务 24/7 运行，玩家无需 DM 在线即可查看角色卡。
+The app is stateless except for `data/characters.db`. Any platform that supports Docker and persistent volumes works.
 
-**推荐平台：**
-- 国际：Railway、Render、Fly.io
-- 国内：阿里云、腾讯云、华为云
-
-**通用流程（以 VPS 类服务器为例）：**
+**Recommended platforms:** Railway, Render, Fly.io / Alibaba Cloud, Tencent Cloud, Huawei Cloud
 
 ```bash
-# 1. 在服务器上安装 Docker 和 docker-compose
-
-# 2. 拉取项目
+# Generic VPS flow
 git clone https://github.com/ZhenWei-Shi/trpg-card-hub
 cd trpg-card-hub
-
-# 3. 配置环境变量（可选）
-cp .env.example .env   # 编辑 .env，修改 SECRET_KEY
-
-# 4. 启动
+cp .env.example .env        # set SECRET_KEY
 docker compose up -d
+# open port 5000 in your firewall / security group
 ```
 
-- 在云控制台防火墙 / 安全组放行 **5000 端口**
-- 访问 `http://服务器公网IP:5000`
-
-对于支持连接 GitHub 仓库的平台（Railway、Render 等），项目已包含 `railway.toml` 和 `render.yaml`，导入仓库后可自动部署。**注意配置持久化存储卷挂载至 `/app/data`，否则重启后数据会丢失。**
+For Railway and Render: import the repo — `railway.toml` and `render.yaml` are already included. **Mount a persistent volume at `/app/data`** or the database resets on every redeploy.
 
 ---
 
-## 使用流程
+## Usage Flow
 
 ```
-1. DM 登录后台（默认密码：dm123456）
-   └── 规则配置 Tab → 设置属性、字段名、显示模块
+1. GM logs into /admin  (default password: dm123456)
+   └── "Rule Config" tab → set attributes, field names, visible sections
 
-2. DM 创建战役房间
-   └── 战役房间 Tab → 新建 → 复制邀请链接发给玩家
+2. GM creates a campaign room
+   └── "Rooms" tab → New Room → copy invite link → send to players
 
-3. 玩家打开链接
-   └── 按 DM 配好的规则填写角色卡，设置密码保护
+3. Players open the link
+   └── Fill in the character sheet configured by the GM, optionally set a password
 
-4. 随时查看
-   └── 手机打开房间链接 → 输入密码 → 查看角色卡
-```
-
----
-
-## 配置说明
-
-所有规则配置通过 **DM 后台 → 规则配置** 完成，无需编辑任何文件：
-
-| 配置项 | 说明 |
-|--------|------|
-| 属性列表 | 自定义属性名、缩写、初始值、最小值、说明文字 |
-| 字段名称 | 修改"职业/外貌/背景"等字段的显示名和提示文字 |
-| 显示模块 | 开关特性区、技能区、物品区 |
-| 主题颜色 | 主色调、背景色、边框色 |
-
-修改后玩家刷新建卡页即时生效，现有角色卡数据不受影响。
-
----
-
-## 修改默认 DM 密码
-
-部署后请修改 `config.json` 中的密码：
-
-```json
-{
-  "admin": {
-    "password": "你的新密码"
-  }
-}
+4. Anytime, anywhere
+   └── Open the room link → enter password → view / edit the sheet
 ```
 
 ---
 
-## 技术栈
+## Configuration Reference
 
-- Python 3.11 / Flask
-- SQLite（数据存储在 `data/characters.db`）
-- 原生 HTML / CSS / JavaScript（无框架依赖）
+All rule configuration is done through **Admin → Rule Config** — no file editing required.
+
+| Setting | Description |
+|---|---|
+| Attribute list | Name, abbreviation, default value, minimum value, description text |
+| Field labels | Display name and placeholder for occupation / appearance / backstory |
+| Section toggles | Show or hide the traits, skills, and items sections |
+| Theme colors | Primary color, background color, border color |
+
+Changes take effect immediately for all players on next page load. Existing character data is unaffected.
 
 ---
 
 ## License
 
-MIT — 随意 fork 部署成自己的版本
+MIT

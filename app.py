@@ -50,7 +50,7 @@ def init_db():
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
-        # 兼容旧数据库：添加 room_id 列
+        # migration: add room_id column for existing databases
         try:
             conn.execute("ALTER TABLE characters ADD COLUMN room_id TEXT DEFAULT 'global'")
         except Exception:
@@ -67,7 +67,7 @@ def admin_required(f):
     return decorated
 
 
-# ── 页面路由 ──────────────────────────────────────────────────────────────────
+# ── Page Routes ───────────────────────────────────────────────────────────────
 
 @app.route('/')
 def index():
@@ -90,14 +90,14 @@ def admin_page():
     return render_template('admin.html')
 
 
-# ── 配置 API ──────────────────────────────────────────────────────────────────
+# ── Config API ────────────────────────────────────────────────────────────────
 
 @app.route('/api/config')
 def api_config():
     return jsonify(get_config())
 
 
-# ── 房间 API ──────────────────────────────────────────────────────────────────
+# ── Room API ──────────────────────────────────────────────────────────────────
 
 @app.route('/api/rooms', methods=['GET'])
 def get_rooms():
@@ -118,7 +118,7 @@ def get_rooms():
 def create_room():
     data = request.get_json()
     room_id = generate_room_id()
-    name = data.get('name', '未命名战役')
+    name = data.get('name', 'Untitled Campaign')
     description = data.get('description', '')
     with get_db() as conn:
         conn.execute(
@@ -148,7 +148,7 @@ def admin_delete_room(room_id):
     return jsonify({"status": "success"})
 
 
-# ── 角色卡 API ────────────────────────────────────────────────────────────────
+# ── Character API ─────────────────────────────────────────────────────────────
 
 @app.route('/api/save', methods=['POST'])
 def save_character():
@@ -164,7 +164,7 @@ def save_character():
         processed_data = {
             "id": char_id,
             "room_id": room_id,
-            "name": char_data.get('name', '无名氏'),
+            "name": char_data.get('name', 'Unknown'),
             "realm": char_data.get('realm', ''),
             "appearance": char_data.get('appearance', ''),
             "background": char_data.get('background', ''),
@@ -263,7 +263,7 @@ def delete_character(char_id):
     return jsonify({"status": "error", "message": "Character not found"}), 404
 
 
-# ── DM 管理后台 API ───────────────────────────────────────────────────────────
+# ── Admin API ─────────────────────────────────────────────────────────────────
 
 @app.route('/api/admin/login', methods=['POST'])
 def admin_login():
@@ -273,7 +273,7 @@ def admin_login():
     if pwd == config.get('admin', {}).get('password', ''):
         session['is_admin'] = True
         return jsonify({"status": "success"})
-    return jsonify({"status": "error", "message": "密码错误"}), 403
+    return jsonify({"status": "error", "message": "Wrong password"}), 403
 
 
 @app.route('/api/admin/logout', methods=['POST'])
