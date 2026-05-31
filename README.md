@@ -1,5 +1,7 @@
 # TRPG Card Hub
 
+[English](README.md) | [中文](README.zh.md)
+
 **A config-driven, browser-based character sheet system for tabletop RPGs with custom rulesets.**
 
 No app installs. No spreadsheet files. The GM configures the rules in a web UI; players fill in their sheets from any device via a shared URL.
