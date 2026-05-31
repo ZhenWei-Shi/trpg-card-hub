@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DM 管理后台</title>
     <style>
-        :root { --primary: #2b6cb0; --bg: #f0f4f8; --border: #bee3f8; }
+        :root { --primary: #4a5568; --bg: #f8f8f6; --border: #c4c4b0; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Microsoft YaHei', sans-serif; background: var(--bg); color: #2d3748; }
 
@@ -27,10 +27,11 @@
         .btn-blue { background: var(--primary); color: white; }
         .btn-green { background: #48bb78; color: white; }
         .btn-gray { background: #718096; color: white; }
+        .btn-red { background: #e53e3e; color: white; }
         .btn:hover { filter: brightness(1.1); }
 
         /* Tab */
-        .tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+        .tabs { display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap; }
         .tab { padding: 8px 20px; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 14px; font-weight: bold; border: none; background: #cbd5e0; color: #4a5568; }
         .tab.active { background: white; color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
         .tab-content { background: white; border-radius: 0 10px 10px 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); overflow: hidden; display: none; }
@@ -42,16 +43,16 @@
         .rooms-list { padding: 16px 20px; }
         .room-item { display: flex; align-items: center; justify-content: space-between; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 10px; gap: 10px; flex-wrap: wrap; }
         .room-info h3 { font-size: 15px; color: #2d3748; margin-bottom: 3px; }
-        .room-code { font-family: monospace; background: #ebf8ff; color: var(--primary); padding: 2px 8px; border-radius: 4px; font-size: 13px; }
+        .room-code { font-family: monospace; background: #f0f4f8; color: var(--primary); padding: 2px 8px; border-radius: 4px; font-size: 13px; }
         .room-meta { font-size: 12px; color: #a0aec0; margin-top: 3px; }
         .room-actions { display: flex; gap: 6px; flex-shrink: 0; }
 
         /* 角色卡表格 */
         table { width: 100%; border-collapse: collapse; }
-        th { background: #ebf8ff; color: var(--primary); padding: 11px 14px; text-align: left; font-size: 13px; border-bottom: 2px solid var(--border); }
+        th { background: #f0f4f8; color: var(--primary); padding: 11px 14px; text-align: left; font-size: 13px; border-bottom: 2px solid #e2e8f0; }
         td { padding: 11px 14px; border-bottom: 1px solid #f0f4f8; font-size: 13px; vertical-align: middle; }
         tr:last-child td { border-bottom: none; }
-        tr:hover td { background: #f7faff; }
+        tr:hover td { background: #fafafa; }
         .action-btn { padding: 4px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
         .edit-btn { background: #ebf8ff; color: var(--primary); margin-right: 4px; }
         .del-btn { background: #fff5f5; color: #e53e3e; }
@@ -59,11 +60,40 @@
         .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; }
         .badge-lock { background: #fff5f5; color: #e53e3e; }
         .badge-open { background: #f0fff4; color: #48bb78; }
-        .stat-badge { background: #ebf8ff; color: var(--primary); padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .stat-badge { background: #f0f4f8; color: var(--primary); padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+
+        /* 规则配置编辑器 */
+        .cfg-editor { padding: 20px; }
+        .cfg-section { background: #fafafa; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+        .cfg-section h3 { font-size: 14px; color: var(--primary); margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid #e2e8f0; }
+        .cfg-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+        .cfg-row label { width: 90px; font-size: 13px; color: #4a5568; flex-shrink: 0; }
+        .cfg-row input[type="text"], .cfg-row input[type="number"] { flex: 1; min-width: 120px; padding: 6px 10px; border: 1px solid #e2e8f0; border-radius: 5px; font-size: 13px; }
+        .cfg-row input[type="color"] { width: 40px; height: 32px; padding: 2px; border: 1px solid #e2e8f0; border-radius: 5px; cursor: pointer; }
+        .cfg-row .ph-input { color: #999; font-size: 12px; }
+
+        /* 属性编辑器 */
+        .stats-header { display: grid; grid-template-columns: 1fr 60px 65px 55px 1.5fr 80px; gap: 6px; padding: 0 0 6px 0; font-size: 12px; color: #999; font-weight: bold; }
+        .stat-row { display: grid; grid-template-columns: 1fr 60px 65px 55px 1.5fr 80px; gap: 6px; margin-bottom: 6px; align-items: center; }
+        .stat-row input { padding: 6px 8px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 13px; width: 100%; }
+        .stat-row-btns { display: flex; gap: 3px; }
+        .stat-row-btns button { padding: 4px 7px; border: 1px solid #e2e8f0; border-radius: 4px; background: white; cursor: pointer; font-size: 12px; }
+        .stat-row-btns button:hover { background: #f0f4f8; }
+        .stat-row-btns .del-s { color: #e53e3e; border-color: #fed7d7; }
+
+        /* 模块开关 */
+        .toggle-row { display: flex; gap: 20px; flex-wrap: wrap; }
+        .toggle-item { display: flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer; }
+        .toggle-item input { width: 16px; height: 16px; cursor: pointer; }
+
+        .save-bar { padding: 16px 20px; background: #f0f4f8; border-top: 1px solid #e2e8f0; display: flex; gap: 10px; align-items: center; }
+        .save-tip { font-size: 12px; color: #718096; }
 
         @media (max-width: 600px) {
             .admin-wrap { padding: 10px; }
             th, td { padding: 8px 10px; font-size: 12px; }
+            .stats-header, .stat-row { grid-template-columns: 1fr 50px 55px 45px; }
+            .stats-header span:nth-child(5), .stat-row input:nth-child(5) { display: none; }
         }
     </style>
 </head>
@@ -92,6 +122,7 @@
     <div class="tabs">
         <button class="tab active" onclick="switchTab('rooms')">📋 战役房间</button>
         <button class="tab" onclick="switchTab('chars')">🧑‍🤝‍🧑 所有角色卡</button>
+        <button class="tab" onclick="switchTab('config')">⚙️ 规则配置</button>
     </div>
 
     <!-- 战役房间 tab -->
@@ -112,7 +143,7 @@
             <thead>
                 <tr>
                     <th>角色名</th>
-                    <th>职业/境界</th>
+                    <th>身份/职业</th>
                     <th>属性</th>
                     <th>密码</th>
                     <th>所属战役</th>
@@ -125,16 +156,98 @@
             </tbody>
         </table>
     </div>
+
+    <!-- 规则配置 tab -->
+    <div class="tab-content" id="tab-config">
+        <div class="cfg-editor">
+
+            <!-- 基本信息 -->
+            <div class="cfg-section">
+                <h3>📌 基本信息</h3>
+                <div class="cfg-row"><label>系统名称</label><input type="text" id="cfg-name" placeholder="如：口述团角色卡"></div>
+                <div class="cfg-row"><label>副标题</label><input type="text" id="cfg-desc" placeholder="系统简介"></div>
+                <div class="cfg-row"><label>列表标题</label><input type="text" id="cfg-list-title" placeholder="如：角色名录"></div>
+            </div>
+
+            <!-- 主题颜色 -->
+            <div class="cfg-section">
+                <h3>🎨 主题颜色</h3>
+                <div class="cfg-row">
+                    <label>主色调</label>
+                    <input type="color" id="cfg-primary-color">
+                    <input type="text" id="cfg-primary-text" placeholder="#4a5568" style="max-width:100px">
+                </div>
+                <div class="cfg-row">
+                    <label>背景色</label>
+                    <input type="color" id="cfg-bg-color">
+                    <input type="text" id="cfg-bg-text" placeholder="#f8f8f6" style="max-width:100px">
+                </div>
+                <div class="cfg-row">
+                    <label>边框色</label>
+                    <input type="color" id="cfg-border-color">
+                    <input type="text" id="cfg-border-text" placeholder="#c4c4b0" style="max-width:100px">
+                </div>
+            </div>
+
+            <!-- 属性设置 -->
+            <div class="cfg-section">
+                <h3>📊 属性设置 <span style="font-size:12px; color:#999; font-weight:normal;">· 属性说明在建卡页对玩家可见</span></h3>
+                <div class="stats-header">
+                    <span>属性名</span><span>缩写</span><span>初始值</span><span>最小值</span><span>属性说明（可选）</span><span></span>
+                </div>
+                <div id="stats-editor-list"></div>
+                <button class="btn btn-gray" onclick="addStatRow()" style="margin-top:6px;">+ 添加属性</button>
+            </div>
+
+            <!-- 字段名称 -->
+            <div class="cfg-section">
+                <h3>🏷️ 字段名称</h3>
+                <div class="cfg-row">
+                    <label>职业字段</label>
+                    <input type="text" id="cfg-field-realm" placeholder="标签名，如：身份/职业">
+                    <input type="text" id="cfg-field-realm-ph" placeholder="提示文字" class="ph-input">
+                </div>
+                <div class="cfg-row">
+                    <label>外貌字段</label>
+                    <input type="text" id="cfg-field-app" placeholder="标签名，如：外貌描述">
+                    <input type="text" id="cfg-field-app-ph" placeholder="提示文字" class="ph-input">
+                </div>
+                <div class="cfg-row">
+                    <label>背景字段</label>
+                    <input type="text" id="cfg-field-bg" placeholder="标签名，如：背景故事">
+                    <input type="text" id="cfg-field-bg-ph" placeholder="提示文字" class="ph-input">
+                </div>
+            </div>
+
+            <!-- 功能模块 -->
+            <div class="cfg-section">
+                <h3>🔧 显示模块</h3>
+                <div class="toggle-row">
+                    <label class="toggle-item"><input type="checkbox" id="toggle-traits"> 特性区</label>
+                    <label class="toggle-item"><input type="checkbox" id="toggle-skills"> 技能区</label>
+                    <label class="toggle-item"><input type="checkbox" id="toggle-items"> 物品区</label>
+                </div>
+            </div>
+
+        </div>
+        <div class="save-bar">
+            <button class="btn btn-blue" onclick="saveConfig()" style="padding:9px 24px;">💾 保存配置</button>
+            <span class="save-tip">保存后刷新建卡页即可看到新规则</span>
+        </div>
+    </div>
 </div>
 
 <script>
     let CONFIG = null;
     let allRooms = [];
+    let editStats = [];
 
     function switchTab(tab) {
-        document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', ['rooms','chars'][i] === tab));
+        const tabs = ['rooms', 'chars', 'config'];
+        document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', tabs[i] === tab));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         document.getElementById('tab-' + tab).classList.add('active');
+        if (tab === 'config') loadConfigEditor();
     }
 
     async function init() {
@@ -182,6 +295,8 @@
         await loadRooms();
     }
 
+    // ── 战役房间 ──────────────────────────────────────────────────────────────
+
     async function loadRooms() {
         const res = await fetch('/api/rooms');
         const result = await res.json();
@@ -200,7 +315,7 @@
                 <div class="room-info">
                     <h3>${r.name} <span class="room-code">${r.id}</span></h3>
                     ${r.description ? `<div style="font-size:13px; color:#718096; margin-top:2px;">${r.description}</div>` : ''}
-                    <div class="room-meta">🧑‍🤝‍🧑 ${r.char_count} 位调查员 · 创建于 ${r.created_at?.substring(0,10)}</div>
+                    <div class="room-meta">🧑‍🤝‍🧑 ${r.char_count} 位角色 · 创建于 ${r.created_at?.substring(0,10)}</div>
                 </div>
                 <div class="room-actions">
                     <a href="/room/${r.id}" class="btn btn-blue" target="_blank">进入</a>
@@ -246,6 +361,8 @@
         navigator.clipboard.writeText(url).then(() => alert(`已复制：${url}`));
     }
 
+    // ── 角色卡表格 ─────────────────────────────────────────────────────────────
+
     function renderCharTable(list) {
         const tbody = document.getElementById('char-tbody');
         if (list.length === 0) {
@@ -263,7 +380,6 @@
             const created = char.created_at?.substring(0, 10) || '—';
             const roomName = char.room_id && char.room_id !== 'global' ? (roomMap[char.room_id] || char.room_id) : '—';
             const editUrl = `/create?id=${char.id}${hasPwd ? '&pwd=' + encodeURIComponent(char.password) : ''}${char.room_id && char.room_id !== 'global' ? '&room=' + char.room_id : ''}`;
-
             return `<tr>
                 <td><div style="font-weight:bold;">${char.name}</div><div style="font-size:11px; color:#999;">${char.appearance || ''}</div></td>
                 <td>${char.realm || '—'}</td>
@@ -287,6 +403,152 @@
         document.getElementById('char-count').textContent = `${result.list.length} 个角色卡`;
         renderCharTable(result.list);
         await loadRooms();
+    }
+
+    // ── 规则配置编辑器 ──────────────────────────────────────────────────────────
+
+    async function loadConfigEditor() {
+        const res = await fetch('/api/config');
+        const cfg = await res.json();
+        editStats = JSON.parse(JSON.stringify(cfg.character.stats || []));
+
+        document.getElementById('cfg-name').value = cfg.app.name || '';
+        document.getElementById('cfg-desc').value = cfg.app.description || '';
+        document.getElementById('cfg-list-title').value = cfg.app.list_title || '';
+
+        setColor('primary', cfg.theme.primary_color || '#4a5568');
+        setColor('bg', cfg.theme.bg_color || '#f8f8f6');
+        setColor('border', cfg.theme.border_color || '#c4c4b0');
+
+        document.getElementById('cfg-field-realm').value    = cfg.character.fields.realm.label || '';
+        document.getElementById('cfg-field-realm-ph').value = cfg.character.fields.realm.placeholder || '';
+        document.getElementById('cfg-field-app').value      = cfg.character.fields.appearance.label || '';
+        document.getElementById('cfg-field-app-ph').value   = cfg.character.fields.appearance.placeholder || '';
+        document.getElementById('cfg-field-bg').value       = cfg.character.fields.background.label || '';
+        document.getElementById('cfg-field-bg-ph').value    = cfg.character.fields.background.placeholder || '';
+
+        const sec = cfg.character.sections || {};
+        document.getElementById('toggle-traits').checked = sec.traits !== false;
+        document.getElementById('toggle-skills').checked = sec.skills === true;
+        document.getElementById('toggle-items').checked  = sec.items  !== false;
+
+        renderStatsList();
+        bindColorInputs();
+    }
+
+    function setColor(name, val) {
+        document.getElementById('cfg-' + name + '-color').value = val;
+        document.getElementById('cfg-' + name + '-text').value  = val;
+    }
+
+    function bindColorInputs() {
+        ['primary', 'bg', 'border'].forEach(name => {
+            const picker = document.getElementById('cfg-' + name + '-color');
+            const text   = document.getElementById('cfg-' + name + '-text');
+            picker.oninput = () => text.value = picker.value;
+            text.oninput   = () => { if (/^#[0-9a-f]{6}$/i.test(text.value)) picker.value = text.value; };
+        });
+    }
+
+    function renderStatsList() {
+        document.getElementById('stats-editor-list').innerHTML = editStats.map((s, i) => `
+            <div class="stat-row" data-i="${i}">
+                <input class="si-label"   value="${s.label   || ''}" placeholder="属性名">
+                <input class="si-short"   value="${s.short   || ''}" placeholder="缩写">
+                <input class="si-default" type="number" value="${s.default ?? 10}">
+                <input class="si-min"     type="number" value="${s.min     ?? 1}">
+                <input class="si-desc"    value="${s.desc    || ''}" placeholder="说明（可选）">
+                <div class="stat-row-btns">
+                    <button onclick="moveStat(${i},-1)" ${i===0?'disabled':''}>↑</button>
+                    <button onclick="moveStat(${i}, 1)" ${i===editStats.length-1?'disabled':''}>↓</button>
+                    <button class="del-s" onclick="removeStat(${i})">×</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function syncStatsFromDOM() {
+        document.querySelectorAll('#stats-editor-list .stat-row').forEach((row, i) => {
+            if (!editStats[i]) return;
+            editStats[i].label   = row.querySelector('.si-label').value.trim();
+            editStats[i].short   = row.querySelector('.si-short').value.trim();
+            editStats[i].default = parseInt(row.querySelector('.si-default').value) || 10;
+            editStats[i].min     = parseInt(row.querySelector('.si-min').value) || 1;
+            editStats[i].desc    = row.querySelector('.si-desc').value.trim();
+        });
+    }
+
+    function addStatRow() {
+        syncStatsFromDOM();
+        editStats.push({key: 's' + Date.now(), label: '', short: '', default: 10, min: 1, desc: ''});
+        renderStatsList();
+    }
+
+    function removeStat(i) {
+        syncStatsFromDOM();
+        editStats.splice(i, 1);
+        renderStatsList();
+    }
+
+    function moveStat(i, dir) {
+        syncStatsFromDOM();
+        const j = i + dir;
+        if (j < 0 || j >= editStats.length) return;
+        [editStats[i], editStats[j]] = [editStats[j], editStats[i]];
+        renderStatsList();
+    }
+
+    async function saveConfig() {
+        syncStatsFromDOM();
+        const validStats = editStats.filter(s => s.label.trim());
+        if (validStats.length === 0) { alert('至少需要一个属性'); return; }
+
+        const newCfg = {
+            app: {
+                name:        document.getElementById('cfg-name').value.trim() || '角色卡系统',
+                description: document.getElementById('cfg-desc').value.trim(),
+                list_title:  document.getElementById('cfg-list-title').value.trim() || '角色名录'
+            },
+            theme: {
+                primary_color: document.getElementById('cfg-primary-text').value || '#4a5568',
+                bg_color:      document.getElementById('cfg-bg-text').value      || '#f8f8f6',
+                border_color:  document.getElementById('cfg-border-text').value  || '#c4c4b0'
+            },
+            character: {
+                stats: validStats,
+                fields: {
+                    realm:      {label: document.getElementById('cfg-field-realm').value || '身份/职业', placeholder: document.getElementById('cfg-field-realm-ph').value},
+                    appearance: {label: document.getElementById('cfg-field-app').value   || '外貌描述',  placeholder: document.getElementById('cfg-field-app-ph').value},
+                    background: {label: document.getElementById('cfg-field-bg').value    || '背景故事',  placeholder: document.getElementById('cfg-field-bg-ph').value}
+                },
+                traits_config: {
+                    section_title: '特性录入',
+                    field_name:    '特性名',
+                    field_grade:   '类型',
+                    field_effect:  '效果描述'
+                },
+                skill_mode: 'generic',
+                sections: {
+                    traits: document.getElementById('toggle-traits').checked,
+                    skills: document.getElementById('toggle-skills').checked,
+                    items:  document.getElementById('toggle-items').checked
+                }
+            },
+            currency: {enabled: false, units: []},
+            reference: {title: '规则速查', sections: []}
+        };
+
+        const res = await fetch('/api/admin/save-config', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(newCfg)
+        });
+        if (res.ok) {
+            CONFIG = newCfg;
+            alert('✅ 配置已保存！玩家刷新建卡页即可看到新规则。');
+        } else {
+            alert('保存失败，请确认已登录');
+        }
     }
 
     init();

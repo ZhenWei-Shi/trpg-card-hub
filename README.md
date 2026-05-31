@@ -1,102 +1,108 @@
 # TRPG Card Hub
 
-一个开源、可自定义的 TRPG 跑团角色卡管理系统。只需修改 `config.json`，即可适配任意规则系统（武侠、克苏鲁、D&D、赛博朋克等）。
+**专为口述团和自制规则设计的在线角色卡共享系统**
+
+DM 在后台配置规则，玩家手机打开链接填卡——不需要安装任何软件，不需要传 Excel 文件。
+
+---
+
+## 为什么做这个
+
+口述团和小规则跑团通常没有专属工具支持。玩家要么手写卡，要么用 Excel 本地存储。出门在外无法查看角色卡，DM 也难以统一管理所有玩家的角色信息。
+
+这个系统解决的核心问题：
+- 玩家离家时用手机查看自己的角色卡
+- DM 在一个页面看到所有玩家的角色状态
+- 任何自制规则都可以在后台配置，无需改代码
+
+---
 
 ## 功能
 
-- 📝 角色卡创建与编辑
-- 📜 角色卡大厅（支持密码保护）
-- 🎨 主题颜色完全自定义
-- ⚙️ 属性名称、货币系统可配置
-- 📚 世界观参考侧边栏
-- 🐳 Docker 一键部署
+- **后台规则配置** — 设置属性名称、初始值、说明文字，开关显示模块，调整主题颜色
+- **战役房间系统** — DM 创建房间，复制邀请链接发给玩家，角色卡按战役归档
+- **角色卡共享** — 所有数据存在服务器，URL 即档案，手机直接访问
+- **密码保护** — 每张角色卡可设密码，保护隐私信息
+- **DM 总览** — 后台查看所有玩家角色卡，包含属性和密码
 
-## 快速开始
+---
 
-### 方式一：直接运行
+## 快速部署
+
+### Docker（推荐）
 
 ```bash
-pip install flask
+git clone https://github.com/ZhenWei-Shi/trpg-card-hub
+cd trpg-card-hub
+docker-compose up -d
+```
+
+访问 `http://localhost:5000`
+
+### Python 直接运行
+
+```bash
+pip install -r requirements.txt
 python app.py
 ```
 
-访问 http://localhost:5000
+---
 
-### 方式二：Docker（推荐）
+## 使用流程
 
-```bash
-docker compose up -d
+```
+1. DM 登录后台（默认密码：dm123456）
+   └── 规则配置 Tab → 设置属性、字段名、显示模块
+
+2. DM 创建战役房间
+   └── 战役房间 Tab → 新建 → 复制邀请链接发给玩家
+
+3. 玩家打开链接
+   └── 按 DM 配好的规则填写角色卡，设置密码保护
+
+4. 随时查看
+   └── 手机打开房间链接 → 输入密码 → 查看角色卡
 ```
 
-## 自定义你的跑团系统
+---
 
-编辑根目录下的 `config.json`：
+## 配置说明
+
+所有规则配置通过 **DM 后台 → 规则配置** 完成，无需编辑任何文件：
+
+| 配置项 | 说明 |
+|--------|------|
+| 属性列表 | 自定义属性名、缩写、初始值、最小值、说明文字 |
+| 字段名称 | 修改"职业/外貌/背景"等字段的显示名和提示文字 |
+| 显示模块 | 开关特性区、技能区、物品区 |
+| 主题颜色 | 主色调、背景色、边框色 |
+
+修改后玩家刷新建卡页即时生效，现有角色卡数据不受影响。
+
+---
+
+## 修改默认 DM 密码
+
+部署后请修改 `config.json` 中的密码：
 
 ```json
 {
-  "app": {
-    "name": "你的站点名称",
-    "description": "副标题"
-  },
-  "theme": {
-    "primary_color": "#8b2121",
-    "bg_color": "#f4eee1",
-    "border_color": "#cbb494"
-  },
-  "character": {
-    "stats": [
-      {"key": "str", "label": "力量", "short": "力", "min": 6, "default": 6}
-    ]
-  },
-  "currency": {
-    "enabled": true,
-    "units": [
-      {"key": "gold", "label": "金币", "rate": 100}
-    ]
+  "admin": {
+    "password": "你的新密码"
   }
 }
 ```
 
-### 改为 D&D 主题示例
+---
 
-```json
-{
-  "app": { "name": "D&D Character Vault", "description": "角色卡管理系统" },
-  "theme": { "primary_color": "#2c5282", "bg_color": "#ebf4ff", "border_color": "#90cdf4" },
-  "character": {
-    "stats": [
-      {"key": "str", "label": "力量", "short": "STR", "min": 1, "default": 10},
-      {"key": "dex", "label": "敏捷", "short": "DEX", "min": 1, "default": 10},
-      {"key": "con", "label": "体质", "short": "CON", "min": 1, "default": 10},
-      {"key": "int", "label": "智力", "short": "INT", "min": 1, "default": 10},
-      {"key": "wis", "label": "感知", "short": "WIS", "min": 1, "default": 10},
-      {"key": "cha", "label": "魅力", "short": "CHA", "min": 1, "default": 10}
-    ],
-    "fields": {
-      "realm":      {"label": "职业/等级", "placeholder": "例如：战士 Lv.5"},
-      "appearance": {"label": "外貌",      "placeholder": "描述角色外貌"},
-      "background": {"label": "背景故事",  "placeholder": "角色的背景故事"}
-    }
-  },
-  "currency": { "enabled": false }
-}
-```
+## 技术栈
 
-## 项目结构
+- Python 3.11 / Flask
+- SQLite（数据存储在 `data/characters.db`）
+- 原生 HTML / CSS / JavaScript（无框架依赖）
 
-```
-trpg-card-hub/
-├── app.py              # Flask 后端
-├── config.json         # 游戏主题配置（修改这里来自定义）
-├── requirements.txt
-├── Dockerfile
-├── docker-compose.yml
-└── templates/
-    ├── index.html      # 主页
-    ├── player.html     # 建卡/编辑页
-    └── char_list.html  # 角色卡大厅
-```
+---
 
 ## License
 
-MIT
+MIT — 随意 fork 部署成自己的版本

@@ -282,6 +282,17 @@ def admin_logout():
     return jsonify({"status": "success"})
 
 
+@app.route('/api/admin/save-config', methods=['POST'])
+@admin_required
+def save_config():
+    new_cfg = request.get_json()
+    current = get_config()
+    new_cfg['admin'] = current.get('admin', {'password': 'dm123456'})
+    with open(CONFIG_PATH, 'w', encoding='utf-8') as f:
+        json.dump(new_cfg, f, ensure_ascii=False, indent=2)
+    return jsonify({"status": "success"})
+
+
 @app.route('/api/admin/list', methods=['GET'])
 @admin_required
 def admin_list():

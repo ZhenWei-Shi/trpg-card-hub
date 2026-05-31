@@ -17,7 +17,8 @@
         label { display: inline-block; width: 80px; font-weight: bold; vertical-align: top; }
         input[type="text"], input[type="number"], input[type="password"], textarea { width: calc(100% - 90px); padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; font-size: 14px; }
         .attr-group { display: flex; flex-wrap: wrap; gap: 10px; }
-        .attr-group div { display: flex; align-items: center; width: 45%; }
+        .attr-group div { display: flex; align-items: center; flex-wrap: wrap; width: 45%; }
+        .stat-desc { font-size: 11px; color: #999; margin-left: 90px; margin-top: 2px; width: 100%; }
         .attr-group label { width: 90px; }
         .attr-group input { width: 80px; }
         .warning { color: red; font-size: 13px; display: none; margin-top: 5px; }
@@ -32,6 +33,18 @@
         .nav-home { position: absolute; left: 20px; top: 20px; background: #555; text-decoration: none; color: white; padding: 8px 14px; border-radius: 4px; font-size: 13px; }
         .room-indicator { display: inline-block; background: #ebf8ff; color: #2b6cb0; padding: 3px 10px; border-radius: 12px; font-size: 12px; margin-left: 10px; vertical-align: middle; }
 
+        /* 技能预设网格 */
+        .skills-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 10px; }
+        .coc-skill-row { display: flex; align-items: center; gap: 6px; padding: 5px 8px; background: #faf8f5; border: 1px solid var(--border-color); border-radius: 4px; }
+        .coc-skill-row .sn { flex: 1; font-size: 13px; font-weight: bold; }
+        .coc-skill-row .sb { font-size: 11px; color: #aaa; white-space: nowrap; }
+        .skill-val-input { width: 54px; padding: 3px 5px; border: 1px solid #ccc; border-radius: 3px; text-align: center; font-size: 13px; }
+        .dnd-skill-row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: #fdf8f2; border: 1px solid var(--border-color); border-radius: 4px; }
+        .dnd-skill-row .sn { flex: 1; font-size: 13px; }
+        .stat-pill { background: var(--bg-color); border: 1px solid var(--border-color); color: #555; padding: 1px 6px; border-radius: 8px; font-size: 11px; font-weight: bold; white-space: nowrap; }
+        .prof-check { width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary-color); }
+        .custom-skill-tip { font-size: 12px; color: #999; margin: 8px 0 4px; }
+
         /* 移动端适配 */
         @media (max-width: 768px) {
             body { padding: 10px; }
@@ -42,6 +55,7 @@
             #resetBtn { position: static; margin-bottom: 10px; }
             .nav-home { position: static; display: inline-block; margin-bottom: 10px; }
             h1 { margin-top: 10px !important; }
+            .skills-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -64,9 +78,11 @@
             <div style="font-size:12px; color:#718096; margin-left:85px; margin-top:4px;">* 设置密码后，其他人查看此卡时需输入密码。</div>
         </div>
 
-        <h2>✨ 特性录入</h2>
+        <div id="section-traits">
+        <h2 id="traits-title">✨ 特性录入</h2>
         <div id="traits-container"></div>
-        <button type="button" onclick="addTrait()" style="background:#718096; margin-bottom:14px;">+ 添加特性</button>
+        <button type="button" id="add-trait-btn" onclick="addTrait()" style="background:#718096; margin-bottom:14px;">+ 添加特性</button>
+        </div>
 
         <h2>📊 属性分配 <span style="font-size:13px; color:#718096;">总和: <span id="points-total" style="color:var(--primary-color); font-weight:bold;">0</span></span></h2>
         <div class="attr-group" id="stats-container"></div>
@@ -75,13 +91,19 @@
         <h2 id="currency-title" style="display:none;">💰 资产</h2>
         <div class="currency-box" id="currency-container"></div>
 
+        <div id="section-items">
         <h2>🎒 物品</h2>
         <div id="items-container"></div>
         <button type="button" onclick="addItem()" style="background:#718096;">+ 添加物品</button>
+        </div>
 
-        <h2>📜 技能录入</h2>
+        <div id="section-skills">
+        <h2 id="skills-title">📜 技能录入</h2>
+        <div id="skills-preset"></div>
+        <p class="custom-skill-tip" id="custom-skill-tip" style="display:none;">自定义技能（不在预设列表内）：</p>
         <div id="skills-container"></div>
-        <button type="button" onclick="addSkill()" style="background:#718096;">+ 添加技能</button>
+        <button type="button" id="add-skill-btn" onclick="addCustomSkill()" style="background:#718096;">+ 添加技能</button>
+        </div>
 
         <hr style="margin:28px 0; border:1px solid var(--border-color);">
         <button id="submitBtn" style="width:100%; font-size:17px; font-weight:bold; padding:14px;">创建角色卡</button>
@@ -94,6 +116,7 @@
 
 <script>
     let CONFIG = null;
+    let TRAIT_CFG = {section_title: '特性录入', field_name: '名字', field_grade: '品级', field_effect: '效果'};
     const urlParams = new URLSearchParams(window.location.search);
     const urlId = urlParams.get('id');
     const urlPwd = urlParams.get('pwd');
@@ -110,8 +133,111 @@
         renderStats();
         renderCurrency();
         renderReference();
+        renderSkillSection();
+        applySections();
         if (urlParams.get('new')) { localStorage.removeItem('char_id'); myCharId = null; }
         loadCharacter();
+    }
+
+    function renderSkillSection() {
+        const mode = CONFIG.character.skill_mode || 'generic';
+        const preset = CONFIG.character.skills_preset || [];
+        if (mode === 'coc') {
+            document.getElementById('skills-title').textContent = '📜 技能分配';
+            document.getElementById('add-skill-btn').textContent = '+ 添加自定义技能';
+            renderCocSkills(preset);
+        } else if (mode === 'dnd') {
+            document.getElementById('skills-title').textContent = '📜 技能熟练';
+            document.getElementById('add-skill-btn').textContent = '+ 添加自定义技能';
+            renderDndSkills(preset);
+        }
+        if (preset.length > 0) document.getElementById('custom-skill-tip').style.display = '';
+    }
+
+    function renderCocSkills(preset) {
+        document.getElementById('skills-preset').innerHTML =
+            '<div class="skills-grid">' + preset.map(s =>
+                `<div class="coc-skill-row">
+                    <span class="sn">${s.name}</span>
+                    <span class="sb">基础${s.base}%</span>
+                    <input type="number" class="skill-val-input" data-skill="${s.name}" data-base="${s.base}"
+                           value="${s.base}" min="0" max="99">
+                    <span style="font-size:12px">%</span>
+                </div>`
+            ).join('') + '</div>';
+    }
+
+    function renderDndSkills(preset) {
+        document.getElementById('skills-preset').innerHTML =
+            '<div class="skills-grid">' + preset.map(s =>
+                `<div class="dnd-skill-row">
+                    <input type="checkbox" class="prof-check" data-skill="${s.name}" data-stat="${s.stat}">
+                    <span class="stat-pill">${s.stat.toUpperCase()}</span>
+                    <span class="sn">${s.name}</span>
+                </div>`
+            ).join('') + '</div>';
+    }
+
+    function collectSkills() {
+        const mode = CONFIG?.character?.skill_mode || 'generic';
+        const skills = [];
+        if (mode === 'coc') {
+            document.querySelectorAll('.skill-val-input').forEach(input => {
+                skills.push({name: input.dataset.skill, value: parseInt(input.value) || 0, base: parseInt(input.dataset.base) || 0});
+            });
+            document.querySelectorAll('.skill-card').forEach(card => {
+                const name = card.querySelector('.sk-name')?.value?.trim();
+                if (name) skills.push({name, value: parseInt(card.querySelector('.sk-val')?.value) || 0});
+            });
+        } else if (mode === 'dnd') {
+            document.querySelectorAll('.prof-check').forEach(chk => {
+                skills.push({name: chk.dataset.skill, stat: chk.dataset.stat, prof: chk.checked});
+            });
+            document.querySelectorAll('.skill-card').forEach(card => {
+                const name = card.querySelector('.sk-name')?.value?.trim();
+                if (name) skills.push({name, stat: card.querySelector('.sk-stat')?.value || '', prof: !!card.querySelector('.sk-prof')?.checked});
+            });
+        } else {
+            document.querySelectorAll('.skill-card').forEach(card => {
+                const name = card.querySelector('.sk-name')?.value?.trim();
+                if (name) skills.push({name, realm: card.querySelector('.sk-realm')?.value || '', desc: card.querySelector('.sk-desc')?.value || '', effect: card.querySelector('.sk-effect')?.value || ''});
+            });
+        }
+        return skills;
+    }
+
+    function fillSkills(skills) {
+        if (!skills || skills.length === 0) return;
+        const mode = CONFIG?.character?.skill_mode || 'generic';
+        if (mode === 'coc') {
+            const map = {};
+            skills.forEach(s => { if (s.name) map[s.name] = s.value; });
+            document.querySelectorAll('.skill-val-input').forEach(input => {
+                if (map[input.dataset.skill] !== undefined) input.value = map[input.dataset.skill];
+            });
+            const presetNames = new Set(Array.from(document.querySelectorAll('.skill-val-input')).map(i => i.dataset.skill));
+            skills.filter(s => !presetNames.has(s.name)).forEach(s => {
+                addCustomSkill();
+                const cards = document.querySelectorAll('#skills-container .skill-card');
+                const card = cards[cards.length - 1];
+                if (card) { card.querySelector('.sk-name').value = s.name; if (card.querySelector('.sk-val')) card.querySelector('.sk-val').value = s.value || 0; }
+            });
+        } else if (mode === 'dnd') {
+            const map = {};
+            skills.forEach(s => { if (s.name) map[s.name] = s.prof; });
+            document.querySelectorAll('.prof-check').forEach(chk => {
+                if (map[chk.dataset.skill] !== undefined) chk.checked = !!map[chk.dataset.skill];
+            });
+            const presetNames = new Set(Array.from(document.querySelectorAll('.prof-check')).map(c => c.dataset.skill));
+            skills.filter(s => !presetNames.has(s.name)).forEach(s => {
+                addCustomSkill();
+                const cards = document.querySelectorAll('#skills-container .skill-card');
+                const card = cards[cards.length - 1];
+                if (card) { card.querySelector('.sk-name').value = s.name || ''; if (card.querySelector('.sk-stat')) card.querySelector('.sk-stat').value = s.stat || ''; if (card.querySelector('.sk-prof')) card.querySelector('.sk-prof').checked = !!s.prof; }
+            });
+        } else {
+            skills.forEach(s => addCustomSkill(s.name, s.realm, s.desc, s.effect));
+        }
     }
 
     function applyTheme() {
@@ -132,6 +258,11 @@
         document.getElementById('charRealm').placeholder = f.realm.placeholder;
         document.getElementById('charApp').placeholder = f.appearance.placeholder;
         document.getElementById('charBg').placeholder = f.background.placeholder;
+        if (CONFIG.character.traits_config) {
+            TRAIT_CFG = CONFIG.character.traits_config;
+            document.getElementById('traits-title').textContent = '✨ ' + TRAIT_CFG.section_title;
+            document.getElementById('add-trait-btn').textContent = '+ 添加' + TRAIT_CFG.field_name;
+        }
     }
 
     function renderStats() {
@@ -139,10 +270,18 @@
         container.innerHTML = '';
         CONFIG.character.stats.forEach(stat => {
             const div = document.createElement('div');
-            div.innerHTML = `<label>${stat.label}:</label><input type="number" id="attr-${stat.key}" class="attr-input" value="${stat.default}" min="${stat.min}" oninput="calcStats()">`;
+            div.innerHTML = `<label>${stat.label}:</label><input type="number" id="attr-${stat.key}" class="attr-input" value="${stat.default}" min="${stat.min}" oninput="calcStats()">${stat.desc ? `<span class="stat-desc">${stat.desc}</span>` : ''}`;
             container.appendChild(div);
         });
         calcStats();
+    }
+
+    function applySections() {
+        const s = CONFIG.character.sections || {};
+        ['traits', 'skills', 'items'].forEach(sec => {
+            const el = document.getElementById('section-' + sec);
+            if (el) el.style.display = s[sec] === false ? 'none' : '';
+        });
     }
 
     function renderCurrency() {
@@ -192,20 +331,38 @@
         const div = document.createElement('div');
         div.className = 'dynamic-card trait-card';
         div.innerHTML = `<button type="button" class="remove-btn" onclick="removeParent(this)">X</button>
-            <div class="form-group" style="margin-bottom:5px;"><label>名字:</label><input type="text" class="tr-name" value="${name}"></div>
-            <div class="form-group" style="margin-bottom:5px;"><label>品级:</label><input type="text" class="tr-grade" value="${grade}"></div>
-            <div class="form-group" style="margin-bottom:0;"><label>效果:</label><textarea class="tr-effect" rows="2">${effect}</textarea></div>`;
+            <div class="form-group" style="margin-bottom:5px;"><label>${TRAIT_CFG.field_name}:</label><input type="text" class="tr-name" value="${name}"></div>
+            <div class="form-group" style="margin-bottom:5px;"><label>${TRAIT_CFG.field_grade}:</label><input type="text" class="tr-grade" value="${grade}"></div>
+            <div class="form-group" style="margin-bottom:0;"><label>${TRAIT_CFG.field_effect}:</label><textarea class="tr-effect" rows="2">${effect}</textarea></div>`;
         document.getElementById('traits-container').appendChild(div);
     }
 
-    function addSkill(name='', realm='', desc='', effect='') {
+    function addCustomSkill(name='', realm='', desc='', effect='') {
+        const mode = CONFIG?.character?.skill_mode || 'generic';
         const div = document.createElement('div');
         div.className = 'dynamic-card skill-card';
-        div.innerHTML = `<button type="button" class="remove-btn" onclick="removeParent(this)">X</button>
-            <div class="form-group" style="margin-bottom:5px;"><label>名字:</label><input type="text" class="sk-name" value="${name}"></div>
-            <div class="form-group" style="margin-bottom:5px;"><label>等级:</label><input type="text" class="sk-realm" value="${realm}"></div>
-            <div class="form-group" style="margin-bottom:5px;"><label>介绍:</label><textarea class="sk-desc" rows="2">${desc}</textarea></div>
-            <div class="form-group" style="margin-bottom:0;"><label>效果:</label><textarea class="sk-effect" rows="2">${effect}</textarea></div>`;
+        if (mode === 'coc') {
+            div.innerHTML = `<button type="button" class="remove-btn" onclick="removeParent(this)">X</button>
+                <div class="form-group" style="margin-bottom:0; display:flex; align-items:center; gap:8px;">
+                    <label>技能名:</label><input type="text" class="sk-name" value="${name}" style="flex:1; width:auto;">
+                    <input type="number" class="sk-val" value="${realm || 5}" min="0" max="99" style="width:60px; padding:6px;">
+                    <span style="font-size:13px">%</span>
+                </div>`;
+        } else if (mode === 'dnd') {
+            const statOptions = (CONFIG.character.stats || []).map(s => `<option value="${s.key}"${(realm === s.key ? ' selected' : '')}>${s.short}</option>`).join('');
+            div.innerHTML = `<button type="button" class="remove-btn" onclick="removeParent(this)">X</button>
+                <div class="form-group" style="margin-bottom:0; display:flex; align-items:center; gap:8px;">
+                    <input type="checkbox" class="sk-prof" style="width:16px; height:16px;" ${effect ? 'checked' : ''}>
+                    <input type="text" class="sk-name" placeholder="技能名" value="${name}" style="flex:1; width:auto;">
+                    <select class="sk-stat" style="width:72px; padding:6px;">${statOptions}</select>
+                </div>`;
+        } else {
+            div.innerHTML = `<button type="button" class="remove-btn" onclick="removeParent(this)">X</button>
+                <div class="form-group" style="margin-bottom:5px;"><label>名字:</label><input type="text" class="sk-name" value="${name}"></div>
+                <div class="form-group" style="margin-bottom:5px;"><label>等级:</label><input type="text" class="sk-realm" value="${realm}"></div>
+                <div class="form-group" style="margin-bottom:5px;"><label>介绍:</label><textarea class="sk-desc" rows="2">${desc}</textarea></div>
+                <div class="form-group" style="margin-bottom:0;"><label>效果:</label><textarea class="sk-effect" rows="2">${effect}</textarea></div>`;
+        }
         document.getElementById('skills-container').appendChild(div);
     }
 
@@ -238,7 +395,7 @@
             });
         }
         if (data.traits) data.traits.forEach(t => addTrait(t.name, t.grade, t.effect));
-        if (data.skills) data.skills.forEach(s => addSkill(s.name, s.realm, s.desc, s.effect));
+        fillSkills(data.skills || []);
         if (data.items) data.items.forEach(i => addItem(i.name, i.desc));
         calcStats();
         submitBtn.innerText = '💾 保存并更新角色卡';
@@ -250,17 +407,13 @@
     function initEmpty() {
         ['traits-container','skills-container','items-container'].forEach(id => document.getElementById(id).innerHTML = '');
         ['charName','charRealm','charApp','charBg','charPwd'].forEach(id => document.getElementById(id).value = '');
-        CONFIG.character.stats.forEach(s => {
-            const el = document.getElementById('attr-' + s.key);
-            if (el) el.value = s.default;
-        });
-        if (CONFIG.currency.enabled) {
-            CONFIG.currency.units.forEach(u => {
-                const el = document.getElementById('coin-' + u.key);
-                if (el) el.value = 0;
-            });
-        }
-        addTrait(); addSkill(); addItem(); calcStats();
+        CONFIG.character.stats.forEach(s => { const el = document.getElementById('attr-' + s.key); if (el) el.value = s.default; });
+        if (CONFIG.currency.enabled) CONFIG.currency.units.forEach(u => { const el = document.getElementById('coin-' + u.key); if (el) el.value = 0; });
+        const mode = CONFIG?.character?.skill_mode || 'generic';
+        if (mode === 'coc') document.querySelectorAll('.skill-val-input').forEach(i => { i.value = i.dataset.base; });
+        else if (mode === 'dnd') document.querySelectorAll('.prof-check').forEach(c => { c.checked = false; });
+        else addCustomSkill();
+        addTrait(); addItem(); calcStats();
     }
 
     async function loadCharacter() {
@@ -319,7 +472,7 @@
             password: document.getElementById('charPwd').value || '',
             stats, assets,
             traits: gatherData('.trait-card', [{key:'name',cls:'.tr-name'},{key:'grade',cls:'.tr-grade'},{key:'effect',cls:'.tr-effect'}]),
-            skills: gatherData('.skill-card', [{key:'name',cls:'.sk-name'},{key:'realm',cls:'.sk-realm'},{key:'desc',cls:'.sk-desc'},{key:'effect',cls:'.sk-effect'}]),
+            skills: collectSkills(),
             items:  gatherData('.item-card',  [{key:'name',cls:'.it-name'},{key:'desc',cls:'.it-desc'}])
         };
 

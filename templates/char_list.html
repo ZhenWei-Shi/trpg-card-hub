@@ -150,11 +150,24 @@
         }
     }
 
+    function renderSkillsDisplay(skills) {
+        if (!skills || skills.length === 0) return '无';
+        const first = skills[0];
+        if (first.value !== undefined) {
+            return skills.map(s => `<span style="white-space:nowrap"><b>${s.name}</b> ${s.value}%</span>`).join(' · ');
+        } else if (first.prof !== undefined) {
+            const profList = skills.filter(s => s.prof);
+            if (profList.length === 0) return '无熟练技能';
+            return profList.map(s => `<b style="color:var(--primary-color)">✓ ${s.name}</b>`).join('  ');
+        }
+        return skills.map(s => `<b>${s.name}</b>`).join('，');
+    }
+
     function showModal(data, passedPwd) {
         const f = CONFIG.character.fields;
         const statsHtml = CONFIG.character.stats.map(s => `${s.short}:${data.stats?.[s.key] || 0}`).join(' | ');
         const traits = data.traits?.map(t => `${t.name}(${t.grade})`).join('、') || '无';
-        const skills = data.skills?.map(s => `<b>${s.name}</b>`).join('，') || '无';
+        const skills = renderSkillsDisplay(data.skills);
         let editUrl = `/create?id=${data.id}`;
         if (data.room_id && data.room_id !== 'global') editUrl += `&room=${data.room_id}`;
         if (passedPwd) editUrl += `&pwd=${encodeURIComponent(passedPwd)}`;
