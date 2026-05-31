@@ -48,82 +48,30 @@ docker-compose up -d
 
 > 云部署后服务 24/7 运行，玩家无需 DM 在线即可查看角色卡。
 
-#### Railway（最简单，有免费额度）
+**推荐平台：**
+- 国际：Railway、Render、Fly.io
+- 国内：阿里云、腾讯云、华为云
 
-1. Fork 本仓库到你的 GitHub
-2. 登录 [Railway](https://railway.app) → New Project → Deploy from GitHub repo
-3. 选择你 fork 的仓库，Railway 自动识别 Dockerfile 并部署
-4. 进入项目 → **Volumes** → Add Volume，挂载路径填 `/app/data`（持久化数据库）
-5. 部署完成后在 **Settings → Domains** 生成公开域名
-
-> 可选：在 Variables 里设置 `SECRET_KEY` 为随机字符串，提高 session 安全性。
-
-#### Render
-
-1. Fork 本仓库到你的 GitHub
-2. 登录 [Render](https://render.com) → New → Web Service → 连接仓库
-3. Runtime 选 **Docker**，Render 会自动读取 `render.yaml` 配置
-4. `render.yaml` 已预配置 1GB 持久磁盘挂载至 `/app/data`
-5. 点击 **Create Web Service**，等待部署完成
-
-> Render 免费套餐无持久磁盘，数据会在重启后丢失。建议使用 Starter 套餐（$7/月）。
-
-#### 阿里云 / 腾讯云（国内访问推荐）
-
-> 适合玩家全在国内的团，访问速度最佳，价格约 **24 元/月**。
-
-**推荐机型：**
-
-| 产品 | 最低配置 | 参考价格 |
-|------|---------|---------|
-| 阿里云轻量应用服务器 | 1 核 1G | ~24 元/月 |
-| 腾讯云轻量应用服务器 | 1 核 1G | ~24 元/月 |
-| 华为云耀云服务器 | 1 核 1G | ~25 元/月 |
-
-**部署步骤（阿里云 / 腾讯云 / 华为云步骤相同）：**
+**通用流程（以 VPS 类服务器为例）：**
 
 ```bash
-# 1. 购买轻量应用服务器，镜像选 Ubuntu 22.04，SSH 登录后执行：
+# 1. 在服务器上安装 Docker 和 docker-compose
 
-# 2. 安装 Docker（国内镜像加速）
-curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun
-
-# 3. 安装 docker-compose
-apt install -y docker-compose-plugin
-
-# 4. 拉取项目
+# 2. 拉取项目
 git clone https://github.com/ZhenWei-Shi/trpg-card-hub
 cd trpg-card-hub
 
-# 5. 设置环境变量（可选但推荐）
-cp .env.example .env
-# 编辑 .env，修改 SECRET_KEY
+# 3. 配置环境变量（可选）
+cp .env.example .env   # 编辑 .env，修改 SECRET_KEY
 
-# 6. 启动服务
+# 4. 启动
 docker compose up -d
 ```
 
-```bash
-# 7. 开放端口（在云控制台防火墙 / 安全组放行 5000 端口）
-# 阿里云：控制台 → 轻量应用服务器 → 防火墙 → 添加规则 → TCP 5000
-# 腾讯云：控制台 → 轻量应用服务器 → 防火墙 → 添加规则 → TCP 5000
-# 华为云：控制台 → 安全组 → 入方向规则 → TCP 5000
-```
+- 在云控制台防火墙 / 安全组放行 **5000 端口**
+- 访问 `http://服务器公网IP:5000`
 
-访问 `http://你的服务器公网IP:5000`
-
-> **绑定域名（可选）：** 将域名解析到服务器 IP，配置 Nginx 反向代理到 5000 端口，并申请免费 SSL 证书（Let's Encrypt）。
-
----
-
-#### 环境变量说明
-
-复制 `.env.example` 为 `.env` 后按需修改：
-
-| 变量 | 说明 | 默认值 |
-|------|------|--------|
-| `PORT` | 服务监听端口（云平台自动注入） | `5000` |
-| `SECRET_KEY` | Session 加密密钥，生产环境请务必修改 | 内置默认值 |
+对于支持连接 GitHub 仓库的平台（Railway、Render 等），项目已包含 `railway.toml` 和 `render.yaml`，导入仓库后可自动部署。**注意配置持久化存储卷挂载至 `/app/data`，否则重启后数据会丢失。**
 
 ---
 
