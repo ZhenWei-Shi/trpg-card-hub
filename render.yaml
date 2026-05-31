@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: trpg-card-hub
+    runtime: docker
+    plan: starter          # 改为 free 可用免费套餐（无持久磁盘）
+    disk:
+      name: trpg-data
+      mountPath: /app/data
+      sizeGB: 1
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true

@@ -1,7 +1,4 @@
 {
-  "admin": {
-    "password": "dm123456"
-  },
   "app": {
     "name": "口述团角色卡",
     "description": "自定义规则 · 在线角色卡共享系统",
@@ -14,16 +11,60 @@
   },
   "character": {
     "stats": [
-      {"key": "jin",  "label": "筋力", "short": "筋", "desc": "瞬间的爆发力以及瞬时速度",     "min": 1, "default": 10},
-      {"key": "fan",  "label": "反应", "short": "反", "desc": "对于突袭的反应以及出手的速度", "min": 1, "default": 10},
-      {"key": "ti",   "label": "体质", "short": "质", "desc": "生命力与耐久程度",             "min": 1, "default": 10},
-      {"key": "jing", "label": "精神", "short": "神", "desc": "意志力与魔法抗性",             "min": 1, "default": 10},
-      {"key": "zhi",  "label": "智慧", "short": "慧", "desc": "知识、计算与魔力来源",         "min": 1, "default": 10}
+      {
+        "default": 10,
+        "desc": "瞬间的爆发力以及瞬时速度",
+        "key": "jin",
+        "label": "筋力",
+        "min": 1,
+        "short": "筋"
+      },
+      {
+        "default": 10,
+        "desc": "对于突袭的反应以及出手的速度",
+        "key": "fan",
+        "label": "反应",
+        "min": 1,
+        "short": "反"
+      },
+      {
+        "default": 10,
+        "desc": "生命力与耐久程度",
+        "key": "ti",
+        "label": "体质",
+        "min": 1,
+        "short": "质"
+      },
+      {
+        "default": 10,
+        "desc": "意志力与魔法抗性",
+        "key": "jing",
+        "label": "精神",
+        "min": 1,
+        "short": "神"
+      },
+      {
+        "default": 10,
+        "desc": "知识、计算与魔力来源",
+        "key": "zhi",
+        "label": "智慧",
+        "min": 1,
+        "short": "慧"
+      }
     ],
     "fields": {
-      "realm":      {"label": "身份/职业", "placeholder": "角色的身份或职业"},
-      "appearance": {"label": "外貌描述",  "placeholder": "外貌特征描述"},
-      "background": {"label": "背景故事",  "placeholder": "角色的背景经历与动机"}
+      "realm": {
+        "label": "身份/职业",
+        "placeholder": "角色的身份或职业"
+      },
+      "appearance": {
+        "label": "外貌描述",
+        "placeholder": "外貌特征描述"
+      },
+      "background": {
+        "label": "背景故事",
+        "placeholder": "角色的背景经历与动机"
+      }
     },
     "traits_config": {
       "section_title": "特性录入",
@@ -33,8 +74,8 @@
     },
     "skill_mode": "generic",
     "sections": {
-      "traits": true,
-      "skills": false,
+      "traits": false,
+      "skills": true,
       "items": true
     }
   },
@@ -45,5 +86,8 @@
   "reference": {
     "title": "规则速查",
     "sections": []
+  },
+  "admin": {
+    "password": "dm123456"
   }
 }
