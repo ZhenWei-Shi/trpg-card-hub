@@ -1,8 +1,8 @@
 {
   "app": {
-    "name": "口述团角色卡",
-    "description": "自定义规则 · 在线角色卡共享系统",
-    "list_title": "角色名录"
+    "name": "TRPG Card Hub",
+    "description": "Config-driven online character sheet system",
+    "list_title": "Character Registry"
   },
   "theme": {
     "primary_color": "#4a5568",
@@ -12,65 +12,65 @@
   "character": {
     "stats": [
       {
+        "key": "str",
+        "label": "Strength",
+        "short": "STR",
         "default": 10,
-        "desc": "瞬间的爆发力以及瞬时速度",
-        "key": "jin",
-        "label": "筋力",
         "min": 1,
-        "short": "筋"
+        "desc": "Physical power and melee attack rolls"
       },
       {
+        "key": "dex",
+        "label": "Dexterity",
+        "short": "DEX",
         "default": 10,
-        "desc": "对于突袭的反应以及出手的速度",
-        "key": "fan",
-        "label": "反应",
         "min": 1,
-        "short": "反"
+        "desc": "Agility, reflexes, and ranged attacks"
       },
       {
+        "key": "con",
+        "label": "Constitution",
+        "short": "CON",
         "default": 10,
-        "desc": "生命力与耐久程度",
-        "key": "ti",
-        "label": "体质",
         "min": 1,
-        "short": "质"
+        "desc": "Endurance and hit point bonus"
       },
       {
+        "key": "int",
+        "label": "Intelligence",
+        "short": "INT",
         "default": 10,
-        "desc": "意志力与魔法抗性",
-        "key": "jing",
-        "label": "精神",
         "min": 1,
-        "short": "神"
+        "desc": "Knowledge, recall, and spellcasting"
       },
       {
+        "key": "wis",
+        "label": "Wisdom",
+        "short": "WIS",
         "default": 10,
-        "desc": "知识、计算与魔力来源",
-        "key": "zhi",
-        "label": "智慧",
         "min": 1,
-        "short": "慧"
+        "desc": "Perception, insight, and willpower"
       }
     ],
     "fields": {
       "realm": {
-        "label": "身份/职业",
-        "placeholder": "角色的身份或职业"
+        "label": "Class / Role",
+        "placeholder": "e.g. Fighter, Wizard, Rogue"
       },
       "appearance": {
-        "label": "外貌描述",
-        "placeholder": "外貌特征描述"
+        "label": "Appearance",
+        "placeholder": "Describe your character's looks"
       },
       "background": {
-        "label": "背景故事",
-        "placeholder": "角色的背景经历与动机"
+        "label": "Backstory",
+        "placeholder": "Your character's history and motivation"
       }
     },
     "traits_config": {
-      "section_title": "特性录入",
-      "field_name": "特性名",
-      "field_grade": "类型",
-      "field_effect": "效果描述"
+      "section_title": "Traits",
+      "field_name": "Trait Name",
+      "field_grade": "Grade",
+      "field_effect": "Effect"
     },
     "skill_mode": "generic",
     "sections": {
@@ -84,7 +84,7 @@
     "units": []
   },
   "reference": {
-    "title": "规则速查",
+    "title": "Quick Rules",
     "sections": []
   },
   "admin": {

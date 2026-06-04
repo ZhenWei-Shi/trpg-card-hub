@@ -6,6 +6,7 @@ import string
 import sqlite3
 from functools import wraps
 from flask import Flask, request, jsonify, render_template, session
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-change-in-production')
@@ -56,6 +57,15 @@ def init_db():
         except Exception:
             pass
         conn.commit()
+
+
+def verify_char_password(stored, provided):
+    """Verify character password; falls back to plaintext for pre-hash data."""
+    if not stored:
+        return True
+    if check_password_hash(stored, provided):
+        return True
+    return stored == provided
 
 
 def admin_required(f):
@@ -161,24 +171,34 @@ def save_character():
         if not char_id:
             char_id = str(uuid.uuid4())
 
-        processed_data = {
-            "id": char_id,
-            "room_id": room_id,
-            "name": char_data.get('name', 'Unknown'),
-            "realm": char_data.get('realm', ''),
-            "appearance": char_data.get('appearance', ''),
-            "background": char_data.get('background', ''),
-            "password": char_data.get('password', ''),
-            "stats": char_data.get('stats', {}),
-            "assets": char_data.get('assets', {}),
-            "traits": char_data.get('traits', []),
-            "skills": char_data.get('skills', []),
-            "items": char_data.get('items', [])
-        }
+        raw_password = char_data.get('password', '').strip()
 
         with get_db() as conn:
-            existing = conn.execute('SELECT id FROM characters WHERE id = ?', (char_id,)).fetchone()
-            if existing:
+            existing_row = conn.execute('SELECT data FROM characters WHERE id = ?', (char_id,)).fetchone()
+
+            if existing_row:
+                existing_data = json.loads(existing_row['data'])
+                # Empty password field = keep existing; non-empty = update with new hash
+                stored_password = generate_password_hash(raw_password) if raw_password else existing_data.get('password', '')
+            else:
+                stored_password = generate_password_hash(raw_password) if raw_password else ''
+
+            processed_data = {
+                "id": char_id,
+                "room_id": room_id,
+                "name": char_data.get('name', 'Unknown'),
+                "realm": char_data.get('realm', ''),
+                "appearance": char_data.get('appearance', ''),
+                "background": char_data.get('background', ''),
+                "password": stored_password,
+                "stats": char_data.get('stats', {}),
+                "assets": char_data.get('assets', {}),
+                "traits": char_data.get('traits', []),
+                "skills": char_data.get('skills', []),
+                "items": char_data.get('items', [])
+            }
+
+            if existing_row:
                 conn.execute(
                     'UPDATE characters SET data = ?, room_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
                     (json.dumps(processed_data, ensure_ascii=False), room_id, char_id)
@@ -204,8 +224,11 @@ def get_character(char_id):
     if not row:
         return jsonify({"status": "error", "message": "Character not found"}), 404
     char_data = json.loads(row['data'])
-    if char_data.get('password') and char_data['password'] != pwd:
+    stored_pwd = char_data.get('password', '')
+    if not session.get('is_admin') and not verify_char_password(stored_pwd, pwd):
         return jsonify({"status": "error", "code": "WRONG_PASSWORD"}), 403
+    char_data['has_password'] = bool(stored_pwd)
+    char_data.pop('password', None)
     return jsonify({"status": "success", "data": char_data})
 
 
@@ -218,7 +241,10 @@ def verify_password(char_id):
     if not row:
         return jsonify({"status": "error"}), 404
     char_data = json.loads(row['data'])
-    if char_data.get('password') == pwd:
+    stored_pwd = char_data.get('password', '')
+    if stored_pwd and verify_char_password(stored_pwd, pwd):
+        char_data['has_password'] = True
+        char_data.pop('password', None)
         return jsonify({"status": "success", "data": char_data})
     return jsonify({"status": "error", "message": "Wrong password"}), 403
 
@@ -255,12 +281,19 @@ def get_all_characters():
 
 @app.route('/api/delete/<char_id>', methods=['DELETE'])
 def delete_character(char_id):
+    data = request.get_json() or {}
+    pwd = data.get('password', '')
     with get_db() as conn:
-        result = conn.execute('DELETE FROM characters WHERE id = ?', (char_id,)).rowcount
+        row = conn.execute('SELECT data FROM characters WHERE id = ?', (char_id,)).fetchone()
+        if not row:
+            return jsonify({"status": "error", "message": "Character not found"}), 404
+        char_data = json.loads(row['data'])
+        stored_pwd = char_data.get('password', '')
+        if stored_pwd and not verify_char_password(stored_pwd, pwd):
+            return jsonify({"status": "error", "message": "Wrong password"}), 403
+        conn.execute('DELETE FROM characters WHERE id = ?', (char_id,))
         conn.commit()
-    if result:
-        return jsonify({"status": "success"})
-    return jsonify({"status": "error", "message": "Character not found"}), 404
+    return jsonify({"status": "success"})
 
 
 # ── Admin API ─────────────────────────────────────────────────────────────────
@@ -305,6 +338,8 @@ def admin_list():
         char_data = json.loads(row['data'])
         char_data['created_at'] = row['created_at']
         char_data['updated_at'] = row['updated_at']
+        char_data['has_password'] = bool(char_data.get('password', ''))
+        char_data.pop('password', None)
         result.append(char_data)
     return jsonify({"status": "success", "list": result})
 

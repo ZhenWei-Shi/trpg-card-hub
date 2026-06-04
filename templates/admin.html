@@ -376,15 +376,15 @@
             const statsHtml = CONFIG
                 ? CONFIG.character.stats.map(s => `${s.short}:${char.stats?.[s.key] || 0}`).join(' ')
                 : '';
-            const hasPwd = char.password?.trim();
+            const hasPwd = char.has_password;
             const created = char.created_at?.substring(0, 10) || '—';
             const roomName = char.room_id && char.room_id !== 'global' ? (roomMap[char.room_id] || char.room_id) : '—';
-            const editUrl = `/create?id=${char.id}${hasPwd ? '&pwd=' + encodeURIComponent(char.password) : ''}${char.room_id && char.room_id !== 'global' ? '&room=' + char.room_id : ''}`;
+            const editUrl = `/create?id=${char.id}${char.room_id && char.room_id !== 'global' ? '&room=' + char.room_id : ''}`;
             return `<tr>
                 <td><div style="font-weight:bold;">${char.name}</div><div style="font-size:11px; color:#999;">${char.appearance || ''}</div></td>
                 <td>${char.realm || '—'}</td>
                 <td style="font-family:monospace; font-size:11px; color:#718096;">${statsHtml}</td>
-                <td>${hasPwd ? `<span class="badge badge-lock">🔒 ${char.password}</span>` : '<span class="badge badge-open">📖 公开</span>'}</td>
+                <td>${hasPwd ? '<span class="badge badge-lock">🔒 已加密</span>' : '<span class="badge badge-open">📖 公开</span>'}</td>
                 <td style="font-size:12px;">${roomName}</td>
                 <td style="font-size:11px; color:#a0aec0;">${created}</td>
                 <td>

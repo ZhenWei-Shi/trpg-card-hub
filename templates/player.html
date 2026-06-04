@@ -75,6 +75,7 @@
         <div class="form-group" style="background:#f7fafc; padding:10px; border-radius:4px; border-left:4px solid #3182ce;">
             <label style="color:#2b6cb0;">卡片密码:</label>
             <input type="password" id="charPwd" placeholder="可选：留空则公开，设密码则加密保护">
+            <div id="pwd-hint" style="font-size:12px; color:#e53e3e; margin-left:85px; margin-top:4px; display:none;">* 此卡已有密码，留空则保持不变，输入新值则更新密码。</div>
             <div style="font-size:12px; color:#718096; margin-left:85px; margin-top:4px;">* 设置密码后，其他人查看此卡时需输入密码。</div>
         </div>
 
@@ -383,7 +384,10 @@
         document.getElementById('charRealm').value = data.realm || '';
         document.getElementById('charApp').value = data.appearance || '';
         document.getElementById('charBg').value = data.background || '';
-        document.getElementById('charPwd').value = data.password || '';
+        // Password is never returned by the server; show hint if one was set
+        if (data.has_password) {
+            document.getElementById('pwd-hint').style.display = '';
+        }
         CONFIG.character.stats.forEach(s => {
             const el = document.getElementById('attr-' + s.key);
             if (el) el.value = data.stats?.[s.key] ?? s.default;
